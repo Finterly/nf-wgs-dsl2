@@ -7,9 +7,17 @@ output:
     toc: true
     toc_float: true
   # runtime: shiny
+params:
+  directory:
+    value: x
 ---
 
 ```{r setup, include=FALSE}
+
+# Important: set working directory 
+require("knitr")
+opts_knit$set(root.dir = "params$directory")
+
 # Knitr Options
 knitr::opts_chunk$set(
   echo = FALSE,
@@ -27,15 +35,12 @@ library(data.table)
 library(viridis)
 library(DT)
 
-# ## set working directory, only needed for Rstudio testing
 # library(rstudioapi)
 # setwd(dirname(getActiveDocumentContext()$path))
-
 #library(shiny)
 ```
 
 ## Report overview
-
 This report includes summary statistics for alignments performed on whole genome sequencing data (after sWGA) using the following command run on `r Sys.Date()`:
 
 <code>nextflow run kn_partI.nf</code>
@@ -58,32 +63,31 @@ Total mapped reads to the respective human and *Plasmodium* reference genomes wi
 
 ```{r pf to hs read ratio, echo=FALSE, warning=FALSE}
 
-pf_stats <-read_tsv("Bam_stat_summary_pf_final.tsv", show_col_types = FALSE)
-colnames(pf_stats) <- gsub(",","",colnames(pf_stats))
+pf_stats <-read_tsv("Bam_stats_pf_Final.tsv", show_col_types = FALSE)
+hs_stats <-read_tsv("Bam_stats_hs_Final.tsv", show_col_types = FALSE)
 
-hs_stats <-read_tsv("Bam_stat_summary_hs_final.tsv", show_col_types = FALSE)
+colnames(pf_stats) <- gsub(",","",colnames(pf_stats))
 colnames(hs_stats) <- gsub(",","", colnames(hs_stats))
 
 pf_stats %>%
-  select(sample_name, reads_mapped_pf) %>%
-  left_join(hs_stats %>% select(sample_name, reads_mapped_hs), by = "sample_name") %>%
+  select(sample_id, reads_mapped_pf) %>%
+  left_join(hs_stats %>% select(sample_id, reads_mapped_hs), by = "sample_id") %>%
   mutate(pf_ratio = reads_mapped_pf/reads_mapped_hs) %>%
-  pivot_longer(cols = !c("sample_name","pf_ratio"), values_to = "reads_mapped", names_to = "species") %>%
+  pivot_longer(cols = !c("sample_id","pf_ratio"), values_to = "reads_mapped", names_to = "species") %>%
   mutate(species = case_when(str_detect(species, "hs") ~ "Human",
                              str_detect(species, "pf") ~ "P.falciparum")) %>%
-  mutate(sample_name = str_split(sample_name, "_", n = 5)) %>%
-  mutate(sample_name = map(.x = sample_name, .f = ~ pluck(.x, 2))) %>%
-  mutate(sample_name = paste0(sample_name)) -> reads_long
+  mutate(sample_id = str_split(sample_id, "_", n = 5)) %>%
+  mutate(sample_id = map(.x = sample_id, .f = ~ pluck(.x, 2))) %>%
+  mutate(sample_id = paste0(sample_id)) -> reads_long
   
 reads_long %>%
-  ggplot(aes(x = sample_name, y = reads_mapped, fill = species)) +
+  ggplot(aes(x = sample_id, y = reads_mapped, fill = species)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_brewer(palette = "Paired") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60)) -> p1
   
 ggplotly(p1, width = 800)
-
 ```
 
 ### Read ratios
@@ -94,7 +98,7 @@ Ratio of *P.falciparum* reads to human reads (y) plotted against *Pf* mapped rea
 
 reads_long %>%
   filter(species == "P.falciparum") %>%
-  ggplot(aes(x = log10(reads_mapped), y = pf_ratio, color = sample_name)) +
+  ggplot(aes(x = log10(reads_mapped), y = pf_ratio, color = sample_id)) +
   geom_point() + 
   scale_color_viridis(discrete = T, direction = -1) +
   theme_minimal() +
@@ -192,7 +196,7 @@ ggplotly(p3, width = 600)
 
 pf_stats %>%
   ggplot(aes(reads_mapped_pf, reads_properly_paired_pf)) +
-  geom_point(aes(color = sample_name), size = 2) +
+  geom_point(aes(color = sample_id), size = 2) +
   geom_abline(color = "grey", linetype = "dotdash") +
                labs(title = "Pf reads: mapped vs properly paired",
                     x = "Reads mapped",
@@ -211,7 +215,7 @@ ggplotly(p4)
 
 pf_stats %>%
   ggplot(aes(reads_mapped_pf, reads_unmapped_pf)) +
-  geom_point(aes(color = sample_name), size = 2) +
+  geom_point(aes(color = sample_id), size = 2) +
   geom_abline(color = "grey", linetype = "dotdash") +
                labs(title = "Pf reads: mapped vs unmapped",
                     x = "Reads mapped",
@@ -228,7 +232,7 @@ ggplotly(p5)
 
 pf_stats %>%
   ggplot(aes(reads_mapped_pf, reads_duplicated_pf)) +
-  geom_point(aes(color = sample_name), size = 2) +
+  geom_point(aes(color = sample_id), size = 2) +
   geom_abline(color = "grey", linetype = "dotdash") +
                labs(title = "Pf reads: mapped vs duplicated",
                     x = "Reads mapped",
@@ -266,7 +270,7 @@ Note: Check <code> multiqc_report.html </code> for additional measurements and p
 #   
 #   output$scatterplot <- renderPlotly({
 #     ggplotly(ggplot(pf_stats, aes_string(input$var1, input$var2)) +
-#                geom_point(aes(color = sample_name), size = 2) +
+#                geom_point(aes(color = sample_id), size = 2) +
 #                #geom_smooth() +
 #                geom_abline(color = "grey", linetype = "dotdash") +
 #                labs(title = "Pf bam stat comparisons",
@@ -298,7 +302,7 @@ Note: An equivalent file is generated for *Hs*-aligned reads: <code>Bam_stat_sum
 ```{r bam stats table}
 
 pf_stats %>%
-  relocate(sample_name, .before = row_total_reads_pf) %>%
+  relocate(sample_id, .before = row_total_reads_pf) %>%
   datatable(extensions = 'Buttons',
             options = list(dom = 'Bfrtip', 
                            buttons = c('copy', 'csv'), 

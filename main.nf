@@ -22,8 +22,6 @@ log.info """\
 
 //trimmomatic read trimming
 process trimreads {
-	  
-	conda '$baseDir/envs/env.yml'
 	
 	tag "trim ${pair_id}"	
 
@@ -43,10 +41,10 @@ process trimreads {
 
 	script:
 	"""
-	TrimmomaticPE ${reads[0]} ${reads[1]} \
+	trimmomatic PE ${reads[0]} ${reads[1]} \
 	"trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" \
 	"trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" \
-	ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:3 SLIDINGWINDOW:5:20 -threads 12
+	ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:3 SLIDINGWINDOW:5:20 -threads ${params.max_threads}
 	"""
 }
 
@@ -98,6 +96,7 @@ process multiqc {
 process bwa_align {
 	
 	tag "align ${pair_id}"
+	label 'big_mem'
 
 	publishDir "${params.outdir}/$pair_id"
 
@@ -107,11 +106,6 @@ process bwa_align {
 	output:
 	tuple val(pair_id), path("${pair_id}.sam")
 	
-	time '4h'
-	cpus 8
-	penv 'smp' 
-	memory '16 GB'
-
 	script:
 
 	"""
@@ -119,7 +113,7 @@ process bwa_align {
 	# module load CBI bwa
 
 	# alignment and populate read group header
-	bwa mem -t 20 -M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" $ref ${paired_reads} > ${pair_id}.sam
+	bwa mem -t ${params.max_threads} -M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" $ref ${paired_reads} > ${pair_id}.sam
 	"""
 }
 
@@ -127,6 +121,7 @@ process bwa_align {
 process sam_sort {
 	
 	tag "sam sorting ${pair_id}"
+	label 'big_mem'
 
 	publishDir "${params.outdir}/$pair_id"
 
@@ -142,21 +137,12 @@ process sam_sort {
 	//file("${pair_id}.sorted.bam.bai")
 	//file("${pair_id}.sam")
 
-	time '4h'
-	cpus 8
-	penv 'smp' 
-	memory '16 GB'
-
-
 	"""
-	# load modules
-	# module load CBI gatk/4.2.2.0
-
 	# sam file sorting
-	gatk --java-options "-Xmx16g -Xms16g" SamFormatConverter -R $ref -I ${pair_id}.sam -O ${pair_id}.bam
-    gatk --java-options "-Xmx16g -Xms16g" CleanSam -R $ref -I ${pair_id}.bam -O ${pair_id}.clean.bam
-    gatk --java-options "-Xmx16g -Xms16g" SortSam -R $ref -I ${pair_id}.clean.bam -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR ${PWD}/tmp
-    gatk --java-options "-Xmx16g -Xms16g" MarkDuplicates -R $ref -I ${pair_id}.sorted.bam -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR ${PWD}/tmp
+	gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" SamFormatConverter -R $ref -I ${pair_id}.sam -O ${pair_id}.bam
+    gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" CleanSam -R $ref -I ${pair_id}.bam -O ${pair_id}.clean.bam
+    gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" SortSam -R $ref -I ${pair_id}.clean.bam -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR ${PWD}/tmp
+    gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" MarkDuplicates -R $ref -I ${pair_id}.sorted.bam -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR ${PWD}/tmp
 
     # remove intermediary bams
     # rm ${pair_id}.sam ${pair_id}.bam ${pair_id}.clean.bam
@@ -167,6 +153,7 @@ process sam_sort {
 process sort_pf_human {
 	
 	tag "sort PfHs ${pair_id}"
+	label 'big_mem'
 
 	publishDir "${params.outdir}/$pair_id"
 
@@ -179,18 +166,9 @@ process sort_pf_human {
 	path("${pair_id}.sorted.dup.hs.bam")
 	//file("${pair_id}.sorted.dup.pf.bam.csi")
 
-	time '1h'
-	cpus 8
-	penv 'smp' 
-	memory '16 GB'
-
 	script:
 	"""
-	# load modules
-	# module load CBI samtools gatk/4.2.2.0 
-
 	# sorting of Pf and Hs aligned reads
-
 	samtools view -b -h ${pair_id}.sorted.dup.bam -T $ref -L $refbed/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
 	samtools view -b -h ${pair_id}.sorted.dup.bam -T $ref -L $refbed/human.bed > ${pair_id}.sorted.dup.hs.bam
 	
@@ -223,7 +201,7 @@ process pf_read_depth {
 
 	for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 	    do
-	       gatk --java-options "-Xmx16g -Xms16g" DepthOfCoverage \
+	       gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" DepthOfCoverage \
 		   -R "$refdir/Pf3D7.fasta" \
 		   -O chr"\$i" \
 		   -L Pf3D7_"\$i"_v3 \
@@ -296,11 +274,11 @@ process insert_summary {
 	tuple val(pair_id), path(insert2_collection)
 
 	output:
-	tuple val(pair_id), path('InsertSizes_Final.txt')
+	tuple val(pair_id), path('InsertSize_Final.tsv')
 
 	script:
 	"""
-	cat $insert2_collection > InsertSizes_Final.tsv
+	cat $insert2_collection > InsertSize_Final.tsv
 	"""
 }
 
@@ -340,11 +318,11 @@ process pf_stat_summary {
 	tuple val(pair_id), path(bamstat_pf) 
 
 	output:
-	tuple val(pair_id), path('Bam_stat_summary_pf_final.tsv') 
+	tuple val(pair_id), path('Bam_stats_pf_Final.tsv') 
 
 	script:
 	"""
-	cat $bamstat_pf  | sed '1irow_total_reads_pf filtered_reads_pf sequences_pf is_sorted_pf 1st_fragments_pf last_fragments_pf reads_mapped_pf reads_mapped_and_paired_pf reads_unmapped_pf reads_properly_paired_pf reads_paired_pf reads_duplicated_pf reads_MQ0_pf reads_QC_failed_pf non_primary_alignments_pf total_length_pf total_first_fragment_length_pf total_last_fragment_length_pf bases_mapped_pf bases_mapped_(cigar)_pf bases_trimmed_pf bases_duplicated_pf mismatches_pf error_rate_pf average_length_pf average_first_fragment_length_pf average_last_fragment_length_pf maximum_length_pf maximum_first_fragment_length_pf maximum_last_fragment_length_pf average_quality_pf insert_size_average_pf insert_size_standard_deviation_pf inward_oriented pairs_pf outward_oriented_pairs_pf pairs_with_other_orientation_pf pairs_on_different_chromosomes_pf percentage_of_properly_paired_reads_(%)_pf sample_id' > Bam_stats_pf_Final.tsv
+	cat $bamstat_pf  | sed '1irow_total_reads_pf	filtered_reads_pf	sequences_pf	is_sorted_pf	1st_fragments_pf	last_fragments_pf	reads_mapped_pf	reads_mapped_and_paired_pf	reads_unmapped_pf	reads_properly_paired_pf	reads_paired_pf	reads_duplicated_pf	reads_MQ0_pf	reads_QC_failed_pf	non_primary_alignments_pf	total_length_pf	total_first_fragment_length_pf	total_last_fragment_length_pf	bases_mapped_pf	bases_mapped_(cigar)_pf	bases_trimmed_pf	bases_duplicated_pf	mismatches_pf	error_rate_pf	average_length_pf	average_first_fragment_length_pf	average_last_fragment_length_pf	maximum_length_pf	maximum_first_fragment_length_pf	maximum_last_fragment_length_pf	average_quality_pf	insert_size_average_pf	insert_size_standard_deviation_pf	inward_oriented pairs_pf	outward_oriented_pairs_pf	pairs_with_other_orientation_pf	pairs_on_different_chromosomes_pf	percentage_of_properly_paired_reads_(%)_pf	sample_id' > Bam_stats_pf_Final.tsv
 	#rm *_bamstat_pf_final.tsv
 	"""
 }
@@ -385,11 +363,11 @@ process hs_stat_summary {
 	tuple val(pair_id), path(bamstat_hs)
 
 	output:
-	tuple val(pair_id), path('Bam_stat_summary_hs_final.tsv')
+	tuple val(pair_id), path('Bam_stats_hs_Final.tsv')
 
 	script:
 	"""
-	cat $bamstat_hs | sed '1irow_total_reads_pf filtered_reads_pf sequences_pf is_sorted_pf 1st_fragments_pf last_fragments_pf reads_mapped_pf reads_mapped_and_paired_pf reads_unmapped_pf reads_properly_paired_pf reads_paired_pf reads_duplicated_pf reads_MQ0_pf reads_QC_failed_pf non_primary_alignments_pf total_length_pf total_first_fragment_length_pf total_last_fragment_length_pf bases_mapped_pf bases_mapped_(cigar)_pf bases_trimmed_pf bases_duplicated_pf mismatches_pf error_rate_pf average_length_pf average_first_fragment_length_pf average_last_fragment_length_pf maximum_length_pf maximum_first_fragment_length_pf maximum_last_fragment_length_pf average_quality_pf insert_size_average_pf insert_size_standard_deviation_pf inward_oriented pairs_pf outward_oriented_pairs_pf pairs_with_other_orientation_pf pairs_on_different_chromosomes_pf percentage_of_properly_paired_reads_(%)_pf sample_id' > Bam_stats_hs_Final.tsv
+	cat $bamstat_hs | sed '1irow_total_reads_hs	filtered_reads_hs	sequences_hs	is_sorted_hs	1st_fragments_hs	last_fragments_hs	reads_mapped_hs	reads_mapped_and_paired_hs	reads_unmapped_hs	reads_properly_paired_hs	reads_paired_hs	reads_duplicated_hs	reads_MQ0_hs	reads_QC_failed_hs	non_primary_alignments_hs	total_length_hs	total_first_fragment_length_hs	total_last_fragment_length_hs	bases_mapped_hs	bases_mapped_(cigar)_hs	bases_trimmed_hs	bases_duplicated_hs	mismatches_hs	error_rate_hs	average_length_hs	average_first_fragment_length_hs	average_last_fragment_length_hs	maximum_length_hs	maximum_first_fragment_length_hs	maximum_last_fragment_length_hs	average_quality_hs	insert_size_average_hs	insert_size_standard_deviation_hs	inward_oriented pairs_hs	outward_oriented_pairs_hs	pairs_with_other_orientation_hs	pairs_on_different_chromosomes_hs	percentage_of_properly_paired_reads_(%)_hs	sample_id' > Bam_stats_hs_Final.tsv
 	#rm *_bamstat_hs_final.tsv
 	"""
 }
@@ -427,11 +405,12 @@ process run_report {
 	tuple val(pair_id), path('Bam_stats_pf_Final.tsv'), path('Bam_stats_hs_Final.tsv')
 	
 	output:
+	// file('run_quality_report.html')
 	file('run_quality_report.html')
 
 	script:
 	"""
-	Rscript -e 'rmarkdown::render("$rscript")'
+	Rscript -e 'rmarkdown::render(input = "$rscript", params = list(directory = "${params.outdir}"))'
 	"""
 }
 
@@ -504,6 +483,6 @@ workflow {
 	pf_summary_collect_ch = pf_summary_ch.collect() //collect
 	hs_summary_collect_ch = hs_summary_ch.collect() //collect
 	summary_collect_ch = pf_summary_collect_ch.join(hs_summary_collect_ch) //join 
-	//run_report(summary_collect_ch)
+	run_report(summary_collect_ch)
 
 }
