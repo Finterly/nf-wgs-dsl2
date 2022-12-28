@@ -291,7 +291,7 @@ which is displayed below. Download here or access the file directly in the curre
 
 Note: An equivalent file is generated for *Hs*-aligned reads: <code>Bam_stat_summary_hs_final.tsv</code> and can be found in the same directory as this report.
 
-```{r bam stats table}
+```{r bam stats table, echo=FALSE}
 
 pf_stats %>%
   relocate(sample_id, .before = row_total_reads_pf) %>%
