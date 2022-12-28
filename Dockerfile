@@ -7,8 +7,6 @@ RUN apt-get update \
     libbz2-dev libsdl1.2-dev liblzma-dev libcurl4-openssl-dev zlib1g-dev libxml2-dev \
 	r-cran-tidyverse bwa samtools multiqc datamash && rm -rf /var/lib/apt/lists/*
 
-#RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
-
 # Install miniconda
 ENV CONDA_DIR /opt/conda
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
@@ -27,6 +25,7 @@ RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.m
 RUN R -e 'install.packages("remotes")'
 
 # Update apt-get
+Rscript -e 'install.packages("remotes", version = "2.4.2")'
 RUN Rscript -e 'remotes::install_cran("rmarkdown",upgrade="never", version = "2.19")'
 RUN Rscript -e 'remotes::install_cran("knitr",upgrade="never", version = "1.41")'
 RUN Rscript -e 'remotes::install_cran("tidyverse",upgrade="never", version = "1.3.2")'
@@ -35,5 +34,3 @@ RUN Rscript -e 'remotes::install_cran("RColorBrewer",upgrade="never", version = 
 RUN Rscript -e 'remotes::install_cran("data.table",upgrade="never", version = "1.14.6")'
 RUN Rscript -e 'remotes::install_cran("viridis",upgrade="never", version = "0.6.2")'
 RUN Rscript -e 'remotes::install_cran("DT",upgrade="never", version = "0.26")'
-
-#RUN Rscript -e 'if (!require("BiocManager", quietly = TRUE)) { install.packages("BiocManager"); }; BiocManager::install(version = "3.16");'
