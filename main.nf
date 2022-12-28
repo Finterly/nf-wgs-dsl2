@@ -139,13 +139,10 @@ process sam_sort {
 
 	"""
 	# sam file sorting
-	gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" SamFormatConverter -R $ref -I ${pair_id}.sam -O ${pair_id}.bam
-    gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" CleanSam -R $ref -I ${pair_id}.bam -O ${pair_id}.clean.bam
-    gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" SortSam -R $ref -I ${pair_id}.clean.bam -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR ${PWD}/tmp
-    gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" MarkDuplicates -R $ref -I ${pair_id}.sorted.bam -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR ${PWD}/tmp
-
-    # remove intermediary bams
-    # rm ${pair_id}.sam ${pair_id}.bam ${pair_id}.clean.bam
+	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter -R $ref -I ${pair_id}.sam -O ${pair_id}.bam
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam -R $ref -I ${pair_id}.bam -O ${pair_id}.clean.bam
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam -R $ref -I ${pair_id}.clean.bam -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR ${PWD}/tmp
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates -R $ref -I ${pair_id}.sorted.bam -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR ${PWD}/tmp
     """
 }
 
@@ -201,7 +198,7 @@ process pf_read_depth {
 
 	for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 	    do
-	       gatk --java-options "-Xmx${params.sam_sort_memory}g -Xms${params.sam_sort_memory}g" DepthOfCoverage \
+	       gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" DepthOfCoverage \
 		   -R "$refdir/Pf3D7.fasta" \
 		   -O chr"\$i" \
 		   -L Pf3D7_"\$i"_v3 \
@@ -405,12 +402,11 @@ process run_report {
 	tuple val(pair_id), path('Bam_stats_pf_Final.tsv'), path('Bam_stats_hs_Final.tsv')
 	
 	output:
-	// file('run_quality_report.html')
 	file('run_quality_report.html')
 
 	script:
 	"""
-	Rscript -e 'rmarkdown::render(input = "$rscript", params = list(directory = "${params.outdir}"))'
+	Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "${params.outdir}"))'
 	"""
 }
 

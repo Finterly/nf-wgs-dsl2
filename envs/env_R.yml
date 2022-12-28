@@ -1,7 +1,0 @@
-name: R_kn
-channels: 
-  - defaults
-  - conda-forge
-dependencies: 
-  - r-base=4.2.2
-  - r-rmarkdown

@@ -11,15 +11,10 @@ params:
   directory:
     value: x
 ---
-
 ```{r setup, include=FALSE}
 
-# Important: set working directory 
-require("knitr")
-opts_knit$set(root.dir = "params$directory")
-
 # Knitr Options
-knitr::opts_chunk$set(
+knitr::opts_knit$set( #opts_chunk
   echo = FALSE,
 	message = FALSE,
 	warning = FALSE,
@@ -34,10 +29,6 @@ library(RColorBrewer)
 library(data.table)
 library(viridis)
 library(DT)
-
-# library(rstudioapi)
-# setwd(dirname(getActiveDocumentContext()$path))
-#library(shiny)
 ```
 
 ## Report overview
@@ -63,8 +54,9 @@ Total mapped reads to the respective human and *Plasmodium* reference genomes wi
 
 ```{r pf to hs read ratio, echo=FALSE, warning=FALSE}
 
-pf_stats <-read_tsv("Bam_stats_pf_Final.tsv", show_col_types = FALSE)
-hs_stats <-read_tsv("Bam_stats_hs_Final.tsv", show_col_types = FALSE)
+
+pf_stats <-read_tsv(file.path(params$directory, "Bam_stats_pf_Final.tsv"), show_col_types = FALSE)
+hs_stats <-read_tsv(file.path(params$directory, "Bam_stats_hs_Final.tsv"), show_col_types = FALSE)
 
 colnames(pf_stats) <- gsub(",","",colnames(pf_stats))
 colnames(hs_stats) <- gsub(",","", colnames(hs_stats))
@@ -310,6 +302,7 @@ pf_stats %>%
                            fixedColumns = list(leftColumns = 2)))
 
 ```
+
 
 
 
