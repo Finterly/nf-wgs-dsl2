@@ -412,7 +412,7 @@ process run_report {
 
 
 workflow.onComplete { 
-	println ( workflow.success ? "\nDone! Open the these reports in your browser --> \nmultiqc = $params.outdir/multiqc_report.html\nrun quality report = $params.outdir/reportrmd.html\nnextflow summary = $params.outdir/report.html": "Oops .. something went wrong" )
+	println ( workflow.success ? "\nDone! Open the these reports in your browser --> \nmultiqc = $params.outdir/multiqc_report.html\nrun quality report = $params.outdir/run_quality_report.html\nnextflow summary = $params.outdir/report.html": "Oops .. something went wrong" )
 }
 
 
