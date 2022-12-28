@@ -1,8 +1,9 @@
-# Optimized GATK4 Pipeline Part 1 Nextflow DSL 2 Workflow
+# Optimized GATK4 Pipeline 
+## Part 1 Nextflow DSL 2 Workflow
 
 Adapted from: 
-https://github.com/Karaniare/Optimized_GATK4_pipeline (shell script)
-https://github.com/jhoneycuttr/nf-wgs (Nextflow DSL 1)
+- https://github.com/Karaniare/Optimized_GATK4_pipeline (shell script)
+- https://github.com/jhoneycuttr/nf-wgs (Nextflow DSL 1)
 
 ## Setup
 
