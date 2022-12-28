@@ -4,18 +4,18 @@
 // kniare part I of WGS processing for variant calling
 
 ref = file(params.ref)
-refbed = file(params.refbed)
 refdir = file(params.refdir)
 rscript = file(params.rscript)
 trimadapter = file(params.trimadapter)
 
 
 log.info """\
-    KNIARE PART I WGS - N F   P I P E L I N E
+    GATK4 OPTIMIZED PART I WGS - N F   P I P E L I N E
     ===================================
-    ref           : ${params.ref}
-    refbed        : ${params.refbed}
-    refdir		  : ${params.refdir}
+    ref           	: ${params.ref}
+    refdir		  	: ${params.refdir}
+	rscript		  	: ${params.rscript}
+    trimadapter		: ${params.trimadapter}
     """
     .stripIndent()
 
@@ -166,8 +166,8 @@ process sort_pf_human {
 	script:
 	"""
 	# sorting of Pf and Hs aligned reads
-	samtools view -b -h ${pair_id}.sorted.dup.bam -T $ref -L $refbed/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
-	samtools view -b -h ${pair_id}.sorted.dup.bam -T $ref -L $refbed/human.bed > ${pair_id}.sorted.dup.hs.bam
+	samtools view -b -h ${pair_id}.sorted.dup.bam -T $ref -L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
+	samtools view -b -h ${pair_id}.sorted.dup.bam -T $ref -L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
 	
 	# samtools index -bc ${pair_id}.sorted.dup.pf.bam
 	
