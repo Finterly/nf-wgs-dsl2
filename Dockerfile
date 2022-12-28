@@ -25,7 +25,7 @@ RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.m
 RUN R -e 'install.packages("remotes")'
 
 # Update apt-get
-Rscript -e 'install.packages("remotes", version = "2.4.2")'
+RUN Rscript -e 'install.packages("remotes", version = "2.4.2")'
 RUN Rscript -e 'remotes::install_cran("rmarkdown",upgrade="never", version = "2.19")'
 RUN Rscript -e 'remotes::install_cran("knitr",upgrade="never", version = "1.41")'
 RUN Rscript -e 'remotes::install_cran("tidyverse",upgrade="never", version = "1.3.2")'
