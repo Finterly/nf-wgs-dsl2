@@ -3,8 +3,9 @@ From: rocker/r-ubuntu:22.04
 
 %post
 
+# automake bzip2 wget unzip 
 apt-get update \
-    && apt-get install -y --no-install-recommends build-essential \
+    && apt-get install -y --no-install-recommends build-essential \ 
     python3 python3-dev python3-pip python3-venv git git-lfs default-jdk ant \
     libbz2-dev libsdl1.2-dev liblzma-dev libcurl4-openssl-dev zlib1g-dev libxml2-dev \
 	r-cran-tidyverse bwa samtools multiqc datamash && rm -rf /var/lib/apt/lists/*
@@ -12,6 +13,8 @@ apt-get update \
 # CONDA 
 %environment
 export PATH=/miniconda3/bin:$PATH
+%runscript 
+exec vcontact "$@"
 # Install miniconda 
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /miniconda3/
@@ -44,5 +47,4 @@ Rscript -e 'remotes::install_cran("DT",upgrade="never", version = "0.26")'
 exec /bin/bash "$@"
 %startscript
 exec /bin/bash "$@"
-%runscript 
-exec vcontact "$@"
+
