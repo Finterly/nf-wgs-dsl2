@@ -4,7 +4,7 @@ From: rocker/r-ubuntu:22.04
 %post
 
 apt-get update \
-    && apt-get install -y --no-install-recommends build-essential automake bzip2 wget unzip \ 
+    && apt-get install -y --no-install-recommends build-essential automake bzip2 wget unzip \
     python3 python3-dev python3-pip python3-venv git git-lfs default-jdk ant \
     libbz2-dev libsdl1.2-dev liblzma-dev libcurl4-openssl-dev zlib1g-dev libxml2-dev \
 	r-cran-tidyverse bwa samtools multiqc datamash && rm -rf /var/lib/apt/lists/*
