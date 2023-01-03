@@ -8,25 +8,40 @@ apt-get update \
     && apt-get install -y --no-install-recommends build-essential automake bzip2 wget unzip \
     python3 python3-dev python3-pip python3-venv git git-lfs default-jdk ant \
     libbz2-dev libsdl1.2-dev liblzma-dev libcurl4-openssl-dev zlib1g-dev libxml2-dev \
-	r-cran-tidyverse && rm -rf /var/lib/apt/lists/*
+	r-cran-tidyverse bwa samtools multiqc datamash && rm -rf /var/lib/apt/lists/*
 
-#bwa samtools multiqc datamash 
-
-%files
-    environment.yml
-
+# CONDA 
 %environment
-
+    export LC_ALL=C
+    export LC_NUMERIC=en_GB.UTF-8
+    export PATH="/opt/miniconda/bin:$PATH"
 %post
-    ENV_NAME=$(head -1 environment.yml | cut -d' ' -f2)
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> $SINGULARITY_ENVIRONMENT
-    echo "conda activate $ENV_NAME" >> $SINGULARITY_ENVIRONMENT
-    . /opt/conda/etc/profile.d/conda.sh
-    conda env create -f environment.yml -p /opt/conda/envs/$ENV_NAME
-    conda clean --all
-    
-%runscript
-    exec "$@"
+    #essential stuff but minimal
+    apt update
+    #for security fixe:
+    #apt upgrade -y
+    apt install -y wget bzip2
+    #install conda
+    cd /opt
+    rm -fr miniconda
+    #miniconda3: get miniconda3 version 4.7.12
+    wget https://repo.continuum.io/miniconda/Miniconda3-4.7.12-Linux-x86_64.sh -O miniconda.sh
+    #install conda
+    bash miniconda.sh -b -p /opt/miniconda
+    export PATH="/opt/miniconda/bin:$PATH"
+    #add channels
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    #install trimmomatic
+    conda install -y -c conda-forge -c bioconda trimmomatic
+    conda install -y -c conda-forge -c bioconda gatk4
+    conda install -y -c conda-forge -c bioconda fastqc
+    #cleanup
+    conda clean -y --all
+    rm -f /opt/miniconda.sh
+    apt autoremove --purge
+    apt clean
 
 # RSTUDIO
 mkdir -p /usr/local/lib/R/etc/ /usr/lib/R/etc/
@@ -47,4 +62,5 @@ Rscript -e 'remotes::install_cran("DT",upgrade="never", version = "0.26")'
 exec /bin/bash "$@"
 %startscript
 exec /bin/bash "$@"
-
+%runscript #default runscript: trimmomatic passing all arguments from cli: $@
+exec /opt/miniconda/bin/trimmomatic "$@"
