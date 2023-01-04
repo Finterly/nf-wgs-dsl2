@@ -62,5 +62,5 @@ Rscript -e 'remotes::install_cran("DT",upgrade="never", version = "0.26")'
 exec /bin/bash "$@"
 %startscript
 exec /bin/bash "$@"
-%runscript #default runscript: trimmomatic passing all arguments from cli: $@
-exec /opt/miniconda/bin/trimmomatic "$@"
+#%runscript #default runscript: trimmomatic passing all arguments from cli: $@
+#exec /opt/miniconda/bin/trimmomatic "$@"
