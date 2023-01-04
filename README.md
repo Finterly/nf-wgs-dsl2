@@ -33,7 +33,7 @@ Under construction :construction: !
 If using singularity, please run the command below to generate the singularity image.
 
 ```bash
-sudo singularity build nf-wgs-dsl2.sif Singularity
+sudo apptainer build nf-wgs-dsl2.sif Apptainer
 ```
 
 And then include the `singularity` profile on the command line. 
