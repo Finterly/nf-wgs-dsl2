@@ -12,36 +12,21 @@ apt-get update \
 
 # CONDA 
 %environment
-    export LC_ALL=C
-    export LC_NUMERIC=en_GB.UTF-8
-    export PATH="/opt/miniconda/bin:$PATH"
-%post
-    #essential stuff but minimal
-    apt update
-    #for security fixe:
-    #apt upgrade -y
-    apt install -y wget bzip2
-    #install conda
-    cd /opt
-    rm -fr miniconda
-    #miniconda3: get miniconda3 version 4.7.12
-    wget https://repo.continuum.io/miniconda/Miniconda3-4.7.12-Linux-x86_64.sh -O miniconda.sh
-    #install conda
-    bash miniconda.sh -b -p /opt/miniconda
-    export PATH="/opt/miniconda/bin:$PATH"
-    #add channels
-    conda config --add channels defaults
-    conda config --add channels bioconda
-    conda config --add channels conda-forge
-    #install trimmomatic
-    conda install -y -c conda-forge -c bioconda trimmomatic
-    conda install -y -c conda-forge -c bioconda gatk4
-    conda install -y -c conda-forge -c bioconda fastqc
-    #cleanup
-    conda clean -y --all
-    rm -f /opt/miniconda.sh
-    apt autoremove --purge
-    apt clean
+export PATH=/miniconda3/bin:$PATH
+%runscript 
+exec vcontact "$@"
+# Install miniconda 
+wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /miniconda3/
+rm Miniconda3-latest-Linux-x86_64.sh
+# pull the conda functions in . /miniconda3/etc/profile.d/conda.sh and make pip, etc. available while in %post
+export PATH="/miniconda3/bin:$PATH"
+# Use conda to install trimmomatic, gatk, fastqc
+conda install -y -c conda-forge -c bioconda trimmomatic
+conda install -y -c conda-forge -c bioconda gatk4
+conda install -y -c conda-forge -c bioconda fastqc
+# Help conda resolving Python "import" 
+conda update --all
 
 # RSTUDIO
 mkdir -p /usr/local/lib/R/etc/ /usr/lib/R/etc/
@@ -62,5 +47,4 @@ Rscript -e 'remotes::install_cran("DT",upgrade="never", version = "0.26")'
 exec /bin/bash "$@"
 %startscript
 exec /bin/bash "$@"
-%runscript #default runscript: trimmomatic passing all arguments from cli: $@
-exec /opt/miniconda/bin/trimmomatic "$@"
+
