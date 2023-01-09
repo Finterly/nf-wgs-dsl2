@@ -1,0 +1,12 @@
+
+work/
+genomes/
+tmp/
+.nextflow/
+.nextflow*
+**/.DS_Store
+*/.DS_Store
+.Rhistory
+.RData
+.DS_Store
+**/.Rhistory

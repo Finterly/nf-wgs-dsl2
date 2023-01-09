@@ -30,10 +30,10 @@ Additionally, the nextflow parameter `-profile` can be use to target the infrast
 
 Under construction :construction: !
 
-If using singularity, please run the command below to generate the singularity image.
+If using singularity, please run the command below to generate the singularity image. Use `sudo` if necessary.
 
 ```bash
-sudo apptainer build nf-wgs-dsl2.sif Apptainer
+apptainer build nf-wgs-dsl2.sif Apptainer
 ```
 
 And then include the `singularity` profile on the command line. 
@@ -41,7 +41,7 @@ And then include the `singularity` profile on the command line.
 *Note: you should also include executor you wish to run*
 
 ```bash
-nextflow run main.nf -profile sge,singularity -c conf/custom.config
+nextflow run main.nf -profile sge,singularity
 ```
 
 Below is an example using the genome parameter:
