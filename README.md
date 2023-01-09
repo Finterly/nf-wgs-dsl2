@@ -92,17 +92,12 @@ Potential ways to execute the pipeline:
 # local executor
 nextflow run main.nf
 
+# with sge + singularity and Nextera trimadapter
+nextflow run main.nf -profile sge,singularity --trimadapter ./adapters/NexteraPE-PE.fa
+
 # with a profile (currently only supports sge)
 nextflow run main.nf -profile sge
 
-# run with singularity on an HPC with specified reference sequences
-nextflow run main.nf --readDIR single -profile sge,singularity --refseq_fasta v4_refseq.fasta --target v4
-
-# or locally with docker
-nextflow run main.nf --readDIR ~/Documents/MAD4HATTER_example_data/single/ --target v4 -profile docker --refseq_fasta v4_refseq.fasta
-
-# genomes can be provided in lieu of reference sequences, which will be generated with the amplicon table
-nextflow run main.nf --readDIR ~/Documents/MAD4HATTER_example_data/single/ -w ~/work --target v4 -profile docker --genome PlasmoDB-59_Pfalciparum3D7_Genome.fasta
 ```
 
 If you need to resume after some processes were successfully executed, add -resume at the end of it
