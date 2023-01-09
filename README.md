@@ -27,9 +27,6 @@ Modify the nextflow.config file:
 Additionally, the nextflow parameter `-profile` can be use to target the infrastructure you wish to run the pipeline on. The different profiles are listed below, including any setup that is required.
     
 ### Singularity
-
-Under construction :construction: !
-
 If using singularity, please run the command below to generate the singularity image. Use `sudo` if necessary.
 
 ```bash
@@ -84,8 +81,6 @@ There is a file named `custom.config` in `conf/` that can be used to tailor proc
 this file is used to tailor the pipeline for Wynton HPC at UCSF. This file may be altered to fit your institution's profile.
 
 ### Examples 
-Under construction :construction: !
-
 Potential ways to execute the pipeline:
 
 ```bash
