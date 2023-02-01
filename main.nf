@@ -42,9 +42,7 @@ process trimreads {
 	script:
 	"""
 	trimmomatic PE ${reads[0]} ${reads[1]} \
-	"trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" \
-	"trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" \
-	ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:3 SLIDINGWINDOW:5:20 -threads ${params.max_threads}
+	"trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" "trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:3 SLIDINGWINDOW:5:20 -threads ${params.max_threads}
 	"""
 }
 
@@ -90,7 +88,6 @@ process multiqc {
     multiqc .
     """
 }
-
 
 // bwa alignment
 process bwa_align {
@@ -140,8 +137,11 @@ process sam_sort {
 	"""
 	# sam file sorting
 	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter -R $ref -I ${pair_id}.sam -O ${pair_id}.bam
+
     gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam -R $ref -I ${pair_id}.bam -O ${pair_id}.clean.bam
+
     gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam -R $ref -I ${pair_id}.clean.bam -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR ${PWD}/tmp
+
     gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates -R $ref -I ${pair_id}.sorted.bam -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR ${PWD}/tmp
     """
 }
@@ -174,66 +174,6 @@ process sort_pf_human {
 	# rm ${pair_id}.sorted.dup.bam
 	"""	
 }
-
-
-// distribution of Pf read depth by chromosome
-process pf_read_depth {
-	
-	tag "read depth Pf chroms ${pair_id}"
-
-	publishDir "${params.outdir}/$pair_id/stat_dir/by_chrom"
-
-	input:
-	tuple val(pair_id), path(pf_bam)
-
-	output:
-	file("ReadCoverage_final_${pair_id}.tsv")
-
-	script:
-	"""
-	# load modules
-	# module load CBI samtools gatk/4.2.2.0
-
-	samtools index -bc ${pf_bam}
-
-	for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14
-	    do
-	       gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" DepthOfCoverage \
-		   -R "$refdir/Pf3D7.fasta" \
-		   -O chr"\$i" \
-		   -L Pf3D7_"\$i"_v3 \
-		   --omit-locus-table true \
-		   -I ${pf_bam} --tmp-dir ${PWD}/tmp
-	       awk -F"," -v OFS="\t" '{ print \$0, \$(NF+1) = '"chr\$i"' }' chr"\$i".sample_summary > chr"\$i".sample2_summary
-	    done
-
-	cat *.sample2_summary | awk '!/sample_id/ {print \$0}' | sed '1isample_id, total, mean, third_quartile, median, first_quartile, bases_perc_above_15, chromosome' > ReadCoverage_final_${pair_id}.tsv
-
-	"""
-}
-
-/*
-// pf read depth summary
-process pf_read_depth_summary {
-	
-	tag "read depth summary ${pair_id}"
-
-	publishDir "${params.outdir}/$pair_id/stat_dir"
-
-	input:
-	set pair_id, file(chrom_summary) from read_cover_ch.collect()
-
-	output:
-	file("ReadCoverage_final_${pair_id}.tsv")
-
-	script:
-	"""
-	#!/usr/bin/env bash
-
-	cat $chrom_summary | awk '!/sample_id/ {print \$0}' | sed '1isample_id, total, mean, third_quartile, median, first_quartile, bases_perc_above_15, chromosome' > ReadCoverage_final_${pair_id}.tsv
-	"""
-}
-*/
 
 // insert size calculation
 process insert_sizes {
@@ -349,7 +289,6 @@ process hs_bam_stat_per_sample {
     """
 }
 
-
 // Hs bam statistic summary
 process hs_stat_summary {
 	tag "Hs stat summary"
@@ -368,7 +307,6 @@ process hs_stat_summary {
 	#rm *_bamstat_hs_final.tsv
 	"""
 }
-
 
 // Pf:Hs read ratio calculation
 process pf_hs_ratio_calc {
@@ -390,6 +328,40 @@ process pf_hs_ratio_calc {
 
 }
 
+// distribution of Pf read depth by chromosome
+process pf_read_depth {
+	
+	tag "read depth Pf chroms ${pair_id}"
+
+	publishDir "${params.outdir}/$pair_id/stat_dir/by_chrom"
+
+	input:
+	tuple val(pair_id), path(pf_bam)
+
+	output:
+	file("ReadCoverage_final_${pair_id}.tsv")
+
+	script:
+	"""
+	# load modules
+	# module load CBI samtools gatk/4.2.2.0
+
+	samtools index -bc ${pf_bam}
+
+	for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14
+	    do
+	       gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" DepthOfCoverage \
+		   -R "$refdir/Pf3D7.fasta" \
+		   -O chr"\$i" \
+		   -L Pf3D7_"\$i"_v3 \
+		   --omit-locus-table true \
+		   -I ${pf_bam} --tmp-dir ${PWD}/tmp
+	       awk -F"," -v OFS="\t" '{ print \$0, \$(NF+1) = '"chr\$i"' }' chr"\$i".sample_summary > chr"\$i".sample2_summary
+	    done
+
+	cat *.sample2_summary | awk '!/sample_id/ {print \$0}' | sed '1isample_id, total, mean, third_quartile, median, first_quartile, bases_perc_above_15, chromosome' > ReadCoverage_final_${pair_id}.tsv
+	"""
+}
 
 // Rmd run quality report generation
 process run_report {
@@ -417,7 +389,6 @@ workflow.onComplete {
 
 
 workflow {
-
 	/*
 	Create 'read_pairs' channel that emits for each read pair a
 	tuple containing 3 elements: pair_id, R1, R2
@@ -480,5 +451,4 @@ workflow {
 	hs_summary_collect_ch = hs_summary_ch.collect() //collect
 	summary_collect_ch = pf_summary_collect_ch.join(hs_summary_collect_ch) //join 
 	run_report(summary_collect_ch)
-
 }
