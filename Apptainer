@@ -15,6 +15,11 @@ apt-get update \
     export LC_NUMERIC=en_GB.UTF-8
     export PATH="/opt/miniconda/bin:$PATH"
 %post
+    #essential stuff but minimal
+    apt update
+    #for security fixe:
+    #apt upgrade -y
+    apt install -y wget bzip2
     #install conda
     cd /opt
     rm -fr miniconda
