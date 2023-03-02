@@ -38,7 +38,7 @@ And then include the `singularity` profile on the command line.
 *Note: you should also include executor you wish to run*
 
 ```bash
-nextflow run main.nf -profile sge,apptainer
+NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer
 ```
 
 Below is an example using the genome parameter:
@@ -88,7 +88,7 @@ Potential ways to execute the pipeline:
 nextflow run main.nf
 
 # with sge + singularity and Nextera trimadapter
-nextflow run main.nf -profile sge,apptainer --trimadapter ./adapters/NexteraPE-PE.fa
+NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer --trimadapter ./adapters/NexteraPE-custom.fa
 
 # with a profile (currently only supports sge)
 nextflow run main.nf -profile sge
