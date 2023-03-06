@@ -323,7 +323,7 @@ process pf_hs_ratio_calc {
 
 	shell:
 	'''
-	paste !{bamsum_pf} !{bamsum_hs} | awk -v OFS="\t" '!/per/ {print$39,$7,$46}' | awk '{if($2==0) $2=1}1' |  awk '{if($3==0) $3=1}1' | awk -v OFS="\t" '{print$1,$2,$3,($3/$2)}' | sed '1ireads_mapped_pf, reads_mapped_hs, ratio_hs_pf' > Ratios_hs_pf_reads.tsv
+	paste !{bamsum_pf} !{bamsum_hs} | awk -v OFS="\t" '!/per/ {print$39,$7,$47}' | awk '{if($2==0) $2=1}1' |  awk '{if($3==0) $3=1}1' | awk -v OFS="\t" '{print$1,$2,$3,($3/$2)}' | sed '1ireads_mapped_pf, reads_mapped_hs, ratio_hs_pf' > Ratios_hs_pf_reads.tsv
 	'''
 
 }
