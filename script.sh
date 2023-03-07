@@ -30,8 +30,8 @@ hostname
                                          # e.g. "did my job exceed its memory request?
 
 TRIM=./adapters/NexteraPE-custom.fa
-INPUT = "../data"
-OUTPUT = "../results"
+INPUT = ../data
+OUTPUT = ../results
 
 NXF_VER=22.11.0-edge /usr/bin/time -v -o \$TIME nextflow run main.nf -profile sge,apptainer --inputdir \$INPUT --outdir \$OUTPUT --trimadapter \$TRIM
 
