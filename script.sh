@@ -17,9 +17,9 @@ cat > $SUBMIT <<- PROPERTIES
 #$ -S /bin/bash       # the shell language when run via the job scheduler [IMPORTANT]
 #$ -cwd               # job should run in the current working directory
 #$ -j y               # STDERR and STDOUT should be joined
-#$ -l mem_free=1G     # job requires up to 1 GiB of RAM per slot
-#$ -l scratch=2G      # job requires up to 2 GiB of local /scratch space
-#$ -l h_rt=24:00:00   # job requires up to 24 hours of runtime
+#$ -l mem_free=10G     # job requires up to 1 GiB of RAM per slot
+#$ -l scratch=20G      # job requires up to 2 GiB of local /scratch space
+#$ -l h_rt=120:00:00   # job requires up to 24 hours of runtime
 #$ -r n               # if job crashes, it should be restarted
 
 date
@@ -29,11 +29,11 @@ hostname
 [[ -n "\$JOB_ID" ]] && qstat -j "\$JOB_ID"  # This is useful for debugging and usage purposes,
                                          # e.g. "did my job exceed its memory request?
 
-TRIM=/wynton/home/eppicenter/finterly/kn_test/workflow/adapters/NexteraPE-custom.fa
+TRIM=./adapters/NexteraPE-custom.fa
+INPUT = "../data"
+OUTPUT = "../results"
 
-TIME=time.txt
-
-NXF_VER=22.11.0-edge /usr/bin/time -v -o \$TIME nextflow -q run main.nf --trimadapter \$TRIM -profile sge,apptainer
+NXF_VER=22.11.0-edge /usr/bin/time -v -o \$TIME nextflow run main.nf -profile sge,apptainer --inputdir \$INPUT --outdir \$OUTPUT --trimadapter \$TRIM
 
 exit 0
 
