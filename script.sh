@@ -32,8 +32,9 @@ hostname
 INPUT=/wynton/scratch/finterly/data
 OUTPUT=/wynton/scratch/finterly/results
 TRIM=/wynton/scratch/finterly/workflow/adapters/NexteraPE-custom.fa
+REFDIR=/wynton/scratch/finterly/workflow/genomes
 
-NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer --inputdir \$INPUT --outdir \$OUTPUT --trimadapter \$TRIM
+NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer --inputdir \$INPUT --outdir \$OUTPUT --trimadapter \$TRIM --refdir \$REFDIR 
 
 exit 0
 
