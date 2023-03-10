@@ -1,21 +1,19 @@
 #!/usr/bin/env nextflow
- nextflow.enable.dsl=2
+nextflow.enable.dsl=2
 
 // kniare part I of WGS processing for variant calling
 
-ref = file(params.ref)
-refdir = file(params.refdir)
-rscript = file(params.rscript)
+params.refdir = "$projectDir/genomes"
+params.rscript = "$projectDir/run_quality_report.Rmd"
 trimadapter = file(params.trimadapter)
-
 
 log.info """\
     GATK4 OPTIMIZED PART I WGS - N F   P I P E L I N E
     ===================================
-    ref           	: ${params.ref}
     refdir		  	: ${params.refdir}
 	rscript		  	: ${params.rscript}
     trimadapter		: ${params.trimadapter}
+	outdir			: ${params.outdir}
     """
     .stripIndent()
 
@@ -99,6 +97,7 @@ process bwa_align {
 
 	input:
 	tuple val(pair_id), path(paired_reads), path(unpaired_reads)
+	path refdir
 
 	output:
 	tuple val(pair_id), path("${pair_id}.sam")
@@ -110,7 +109,7 @@ process bwa_align {
 	# module load CBI bwa
 
 	# alignment and populate read group header
-	bwa mem -t ${params.max_threads} -M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" $ref ${paired_reads} > ${pair_id}.sam
+	bwa mem -t ${params.max_threads} -M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" $refdir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
 	"""
 }
 
@@ -119,11 +118,13 @@ process sam_sort {
 	
 	tag "sam sorting ${pair_id}"
 	label 'big_mem'
+	scratch true
 
 	publishDir "${params.outdir}/$pair_id"
 
 	input:
 	tuple val(pair_id), path(sam)
+	path refdir
 
 	output:
 	tuple val(pair_id), path("${pair_id}.sorted.dup.bam"),
@@ -136,13 +137,13 @@ process sam_sort {
 
 	"""
 	# sam file sorting
-	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter -R $ref -I ${pair_id}.sam -O ${pair_id}.bam
+	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter -R $refdir/Pf3D7_human.fa -I ${pair_id}.sam -O ${pair_id}.bam
 
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam -R $ref -I ${pair_id}.bam -O ${pair_id}.clean.bam
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam -R $refdir/Pf3D7_human.fa -I ${pair_id}.bam -O ${pair_id}.clean.bam
 
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam -R $ref -I ${pair_id}.clean.bam -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR ${PWD}/tmp
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam -R $refdir/Pf3D7_human.fa -I ${pair_id}.clean.bam -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR tmp
 
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates -R $ref -I ${pair_id}.sorted.bam -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR ${PWD}/tmp
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates -R $refdir/Pf3D7_human.fa -I ${pair_id}.sorted.bam -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR tmp
     """
 }
 
@@ -156,6 +157,7 @@ process sort_pf_human {
 
 	input:
 	tuple val(pair_id), path(pf_bam)
+	path refdir
 
 	output:
 	tuple val(pair_id), 
@@ -166,8 +168,8 @@ process sort_pf_human {
 	script:
 	"""
 	# sorting of Pf and Hs aligned reads
-	samtools view -b -h ${pair_id}.sorted.dup.bam -T $ref -L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
-	samtools view -b -h ${pair_id}.sorted.dup.bam -T $ref -L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
+	samtools view -b -h ${pair_id}.sorted.dup.bam -T $refdir/Pf3D7_core.bed -L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
+	samtools view -b -h ${pair_id}.sorted.dup.bam -T $refdir/human.bed -L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
 	
 	# samtools index -bc ${pair_id}.sorted.dup.pf.bam
 	
@@ -332,11 +334,13 @@ process pf_hs_ratio_calc {
 process pf_read_depth {
 	
 	tag "read depth Pf chroms ${pair_id}"
+	scratch true
 
 	publishDir "${params.outdir}/$pair_id/stat_dir/by_chrom"
 
 	input:
 	tuple val(pair_id), path(pf_bam)
+	path refdir
 
 	output:
 	file("ReadCoverage_final_${pair_id}.tsv")
@@ -355,7 +359,7 @@ process pf_read_depth {
 		   -O chr"\$i" \
 		   -L Pf3D7_"\$i"_v3 \
 		   --omit-locus-table true \
-		   -I ${pf_bam} --tmp-dir ${PWD}/tmp
+		   -I ${pf_bam} --tmp-dir /tmp
 	       awk -F"," -v OFS="\t" '{ print \$0, \$(NF+1) = '"chr\$i"' }' chr"\$i".sample_summary > chr"\$i".sample2_summary
 	    done
 
@@ -372,7 +376,8 @@ process run_report {
 
 	input:
 	tuple val(pair_id), path('Bam_stats_pf_Final.tsv'), path('Bam_stats_hs_Final.tsv')
-	
+	path rscript
+
 	output:
 	file('run_quality_report.html')
 
@@ -408,19 +413,19 @@ workflow {
 	multiqc(fastqc_ch.collect()) 
 
     // bwa alignment
-    sam_ch = bwa_align(trimmed_reads_ch)
+    sam_ch = bwa_align(trimmed_reads_ch, params.refdir)
 
 	// sam file sorting
-	sam_sort_ch = sam_sort(sam_ch)
+	sam_sort_ch = sam_sort(sam_ch, params.refdir)
 	dup_sort_sam_ch = sam_sort_ch.map{T->[T[0],T[1]]}
 
 	// samtools sorting Pf and human reads
-	bam_ch = sort_pf_human(dup_sort_sam_ch)
+	bam_ch = sort_pf_human(dup_sort_sam_ch, params.refdir)
 	pf_bam_ch = bam_ch.map{T->[T[0],T[1]]} // select pf bam
 	hs_bam_ch = bam_ch.map{T->[T[0],T[2]]} // select hs bam
 
 	// distribution of Pf read depth by chromosome -- 
-	pf_read_depth(pf_bam_ch) 
+	pf_read_depth(pf_bam_ch, params.refdir) 
 
 	// insert size calculation
 	inserts_ch = insert_sizes(pf_bam_ch) 
@@ -450,5 +455,5 @@ workflow {
 	pf_summary_collect_ch = pf_summary_ch.collect() //collect
 	hs_summary_collect_ch = hs_summary_ch.collect() //collect
 	summary_collect_ch = pf_summary_collect_ch.join(hs_summary_collect_ch) //join 
-	run_report(summary_collect_ch)
+	run_report(summary_collect_ch, params.rscript)
 }
