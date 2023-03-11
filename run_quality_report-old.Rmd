@@ -6,10 +6,9 @@ output:
   html_document: 
     toc: true
     toc_float: true
+  # runtime: shiny
 params:
-  pf_final: 
-    value: x
-  hs_final: 
+  directory:
     value: x
 ---
 ```{r setup, include=FALSE}
@@ -56,8 +55,8 @@ Total mapped reads to the respective human and *Plasmodium* reference genomes wi
 ```{r pf to hs read ratio, echo=FALSE, warning=FALSE}
 
 
-pf_stats <-read_tsv(file.path(params$pf_final), show_col_types = FALSE)
-hs_stats <-read_tsv(file.path(params$hs_final), show_col_types = FALSE)
+pf_stats <-read_tsv(file.path(params$directory, "Bam_stats_pf_Final.tsv"), show_col_types = FALSE)
+hs_stats <-read_tsv(file.path(params$directory, "Bam_stats_hs_Final.tsv"), show_col_types = FALSE)
 
 colnames(pf_stats) <- gsub(",","",colnames(pf_stats))
 colnames(hs_stats) <- gsub(",","", colnames(hs_stats))
