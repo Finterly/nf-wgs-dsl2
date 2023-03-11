@@ -7,10 +7,8 @@ output:
     toc: true
     toc_float: true
 params:
-  pf_final: 
-    value: x
-  hs_final: 
-    value: x
+  pf_final: ""
+  hs_final: ""
 ---
 ```{r setup, include=FALSE}
 
