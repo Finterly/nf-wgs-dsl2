@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 
 params.refdir = "$projectDir/genomes"
 params.rscript = "$projectDir/run_quality_report.Rmd"
-trimadapter = file(params.trimadapter)
+
 
 log.info """\
     GATK4 OPTIMIZED PART I WGS - N F   P I P E L I N E
@@ -32,6 +32,7 @@ process trimreads {
 		
 	input:
 	tuple val(pair_id), path(reads)
+	path trimadapter
 
 	output:
 	tuple val(pair_id), path("trimmed_${pair_id}_R{1,2}_paired.fq.gz"),
@@ -216,7 +217,7 @@ process target_pf {
 	publishDir "${params.outdir}/$pair_id"
 
 	input:
-	tuple val(pair_id), path(sorted_dup_bam)
+	tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
 	path refdir
 
 	output:
@@ -225,7 +226,7 @@ process target_pf {
 	script:
 	"""
 	# target Pf aligned reads
-	samtools view -b -h ${sorted_dup_bam} -T $refdir/Pf3D7_core.bed -L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
+	samtools view -b -h ${sorted_dup_bam} -T $refdir/Pf3D7_human.fa -L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
 	samtools index -bc ${pair_id}.sorted.dup.pf.bam
 	"""	
 }
@@ -239,7 +240,7 @@ process target_human {
 	publishDir "${params.outdir}/$pair_id"
 
 	input:
-	tuple val(pair_id), path(sorted_dup_bam)
+	tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
 	path refdir
 
 	output:
@@ -248,7 +249,7 @@ process target_human {
 	script:
 	"""
 	# target Hs aligned reads
-	samtools view -b -h ${sorted_dup_bam} -T $refdir/human.bed -L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
+	samtools view -b -h ${sorted_dup_bam} -T $refdir/Pf3D7_human.fa -L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
 	"""	
 }
 
@@ -480,7 +481,7 @@ workflow {
 		//.ifEmpty{error "Cannot find any reads matching: ${params.reads}"}
 
     // trim reads
-    trimmed_reads_ch = trimreads(read_pairs_ch)
+    trimmed_reads_ch = trimreads(read_pairs_ch, params.trimadapter)
     
     // fastqc report 
     fastqc_ch = fastqc(trimmed_reads_ch)
