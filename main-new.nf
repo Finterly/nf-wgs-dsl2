@@ -110,7 +110,9 @@ process bwa_align {
 	# module load CBI bwa
 
 	# alignment and populate read group header
-	bwa mem -t ${params.max_threads} -M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" $refdir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
+	bwa mem -t ${params.max_threads} \
+	-M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" \
+	$refdir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
 	"""
 }
 
@@ -131,7 +133,10 @@ process sam_format_converter {
 
 	"""
 	# sam format converter
-	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter -R $refdir/Pf3D7_human.fa -I ${sam_file} -O ${pair_id}.bam
+	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter \
+	-R $refdir/Pf3D7_human.fa \
+	-I ${sam_file} \
+	-O ${pair_id}.bam
     
 	# rm ${sam_file}
 	"""
@@ -154,7 +159,10 @@ process sam_clean {
 
 	"""
 	# clean sam
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam -R $refdir/Pf3D7_human.fa -I ${bam_file} -O ${pair_id}.clean.bam
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam \
+	-R $refdir/Pf3D7_human.fa \
+	-I ${bam_file} \
+	-O ${pair_id}.clean.bam
     
 	# rm ${bam_file}
 	"""
@@ -178,7 +186,13 @@ process sam_sort {
 
 	"""
 	# sam file sorting
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam -R $refdir/Pf3D7_human.fa -I ${clean_bam} -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR tmp
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam \
+	-R $refdir/Pf3D7_human.fa \
+	-I ${clean_bam} \
+	-O ${pair_id}.sorted.bam \
+	-SO coordinate \
+	--CREATE_INDEX true \
+	--TMP_DIR .
 
    	# rm ${clean_bam}
     """
@@ -203,7 +217,13 @@ process sam_duplicates {
 
 	"""
 	# mark duplicates
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates -R $refdir/Pf3D7_human.fa -I ${sorted_bam} -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR tmp
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates \
+	-R $refdir/Pf3D7_human.fa \
+	-I ${sorted_bam} \
+	-O ${pair_id}.sorted.dup.bam \
+	-M ${pair_id}_dup_metrics.txt \
+	-ASO coordinate \
+	--TMP_DIR .
     
 	# rm ${sorted_bam}
     """
@@ -226,7 +246,10 @@ process target_pf {
 	script:
 	"""
 	# target Pf aligned reads
-	samtools view -b -h ${sorted_dup_bam} -T $refdir/Pf3D7_human.fa -L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
+	samtools view -b -h ${sorted_dup_bam} \
+	-T $refdir/Pf3D7_human.fa \
+	-L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
+	
 	samtools index -bc ${pair_id}.sorted.dup.pf.bam
 	"""	
 }
@@ -249,7 +272,9 @@ process target_human {
 	script:
 	"""
 	# target Hs aligned reads
-	samtools view -b -h ${sorted_dup_bam} -T $refdir/Pf3D7_human.fa -L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
+	samtools view -b -h ${sorted_dup_bam} \
+	-T $refdir/Pf3D7_human.fa \
+	-L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
 	"""	
 }
 
@@ -271,7 +296,12 @@ process insert_sizes {
 	# load modules
 	# module load CBI gatk/4.2.2.0
 
-	gatk CollectInsertSizeMetrics -I ${pf_bam} -O ${pair_id}.insert.txt -H ${pair_id}_histo.pdf -M 0.05
+	gatk CollectInsertSizeMetrics \
+	-I ${pf_bam} \
+	-O ${pair_id}.insert.txt \
+	-H ${pair_id}_histo.pdf \
+	-M 0.05
+
 	awk 'FNR>=8 && FNR<=8 {print \$1,\$3,\$4,\$5,\$6,\$7,\$8,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20,\$NF="${pair_id}"}' ${pair_id}.insert.txt > ${pair_id}.insert2.txt
 	
 	#rm ${pair_id}.insert.txt 
@@ -459,7 +489,9 @@ process run_report {
 
 	script:
 	"""
-	Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(pf_file = ${stats_pf_tsv}, hs_file = ${stats_hs_tsv}))'
+	# Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(pf_file = ${stats_pf_tsv}, hs_file = ${stats_hs_tsv}))'
+	
+    Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "${params.outdir}"))'
 	"""
 }
 
@@ -532,5 +564,5 @@ workflow {
 	pf_summary_collect_ch = pf_summary_ch.collect() //collect
 	hs_summary_collect_ch = hs_summary_ch.collect() //collect
 	summary_collect_ch = pf_summary_collect_ch.join(hs_summary_collect_ch) //join 
-	run_report(summary_collect_ch, params.rscript)
+	//run_report(summary_collect_ch, params.rscript)
 }
