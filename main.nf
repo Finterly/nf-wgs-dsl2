@@ -481,6 +481,7 @@ process run_report {
 	publishDir params.outdir, mode:'copy'
 
 	input:
+	tuple val(pair_id), path(bamsum_pf), path(bamsum_hs)
 	path bamsum_dir
 	path rscript
 
@@ -559,5 +560,5 @@ workflow {
 	pf_hs_ratio_calc(summary_ch) 
 
 	// Rmd run quality report generation -- 
-	run_report(params.outdir, params.rscript)
+	run_report(summary_ch, params.outdir, params.rscript)
 }
