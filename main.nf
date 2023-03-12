@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 
 params.refdir = "$projectDir/genomes"
 params.rscript = "$projectDir/run_quality_report.Rmd"
-trimadapter = file(params.trimadapter)
+
 
 log.info """\
     GATK4 OPTIMIZED PART I WGS - N F   P I P E L I N E
@@ -32,6 +32,7 @@ process trimreads {
 		
 	input:
 	tuple val(pair_id), path(reads)
+	path trimadapter
 
 	output:
 	tuple val(pair_id), path("trimmed_${pair_id}_R{1,2}_paired.fq.gz"),
@@ -109,7 +110,61 @@ process bwa_align {
 	# module load CBI bwa
 
 	# alignment and populate read group header
-	bwa mem -t ${params.max_threads} -M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" $refdir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
+	bwa mem -t ${params.max_threads} \
+	-M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" \
+	$refdir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
+	"""
+}
+
+// sam format converter
+process sam_format_converter {
+	
+	tag "sam format converter ${pair_id}"
+	label 'big_mem'
+
+	publishDir "${params.outdir}/$pair_id"
+
+	input:
+	tuple val(pair_id), path(sam_file)
+	path refdir
+
+	output:
+	tuple val(pair_id), path("${pair_id}.bam")
+
+	"""
+	# sam format converter
+	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter \
+	-R $refdir/Pf3D7_human.fa \
+	-I ${sam_file} \
+	-O ${pair_id}.bam
+    
+	# rm ${sam_file}
+	"""
+}
+
+// sam clean
+process sam_clean {
+	
+	tag "sam cleaning ${pair_id}"
+	label 'big_mem'
+
+	publishDir "${params.outdir}/$pair_id"
+
+	input:
+	tuple val(pair_id), path(bam_file)
+	path refdir
+
+	output:
+	tuple val(pair_id), path("${pair_id}.clean.bam")
+
+	"""
+	# clean sam
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam \
+	-R $refdir/Pf3D7_human.fa \
+	-I ${bam_file} \
+	-O ${pair_id}.clean.bam
+    
+	# rm ${bam_file}
 	"""
 }
 
@@ -123,57 +178,103 @@ process sam_sort {
 	publishDir "${params.outdir}/$pair_id"
 
 	input:
-	tuple val(pair_id), path(sam)
+	tuple val(pair_id), path(clean_bam)
+	path refdir
+
+	output:
+	tuple val(pair_id), path("${pair_id}.sorted.bam")
+
+	"""
+	# sam file sorting
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam \
+	-R $refdir/Pf3D7_human.fa \
+	-I ${clean_bam} \
+	-O ${pair_id}.sorted.bam \
+	-SO coordinate \
+	--CREATE_INDEX true \
+	--TMP_DIR .
+
+   	# rm ${clean_bam}
+    """
+}
+
+// mark duplicates
+process sam_duplicates {
+	
+	tag "sam mark duplicates ${pair_id}"
+	label 'big_mem'
+	scratch true
+
+	publishDir "${params.outdir}/$pair_id"
+
+	input:
+	tuple val(pair_id), path(sorted_bam)
 	path refdir
 
 	output:
 	tuple val(pair_id), path("${pair_id}.sorted.dup.bam"),
-	path("${pair_id}.sorted.bam"),
-	path("${pair_id}.bam"),
-	path("${pair_id}.clean.bam"),
 	path("${pair_id}_dup_metrics.txt")
-	//file("${pair_id}.sorted.bam.bai")
-	//file("${pair_id}.sam")
 
 	"""
-	# sam file sorting
-	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter -R $refdir/Pf3D7_human.fa -I ${pair_id}.sam -O ${pair_id}.bam
-
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam -R $refdir/Pf3D7_human.fa -I ${pair_id}.bam -O ${pair_id}.clean.bam
-
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam -R $refdir/Pf3D7_human.fa -I ${pair_id}.clean.bam -O ${pair_id}.sorted.bam -SO coordinate --CREATE_INDEX true --TMP_DIR tmp
-
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates -R $refdir/Pf3D7_human.fa -I ${pair_id}.sorted.bam -O ${pair_id}.sorted.dup.bam -M ${pair_id}_dup_metrics.txt -ASO coordinate --TMP_DIR tmp
+	# mark duplicates
+    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates \
+	-R $refdir/Pf3D7_human.fa \
+	-I ${sorted_bam} \
+	-O ${pair_id}.sorted.dup.bam \
+	-M ${pair_id}_dup_metrics.txt \
+	-ASO coordinate \
+	--TMP_DIR .
+    
+	# rm ${sorted_bam}
     """
 }
-
-// samtools sorting Pf and human reads
-process sort_pf_human {
+// subsampling Plasmodium falciparum specific bams
+process target_pf {
 	
-	tag "sort PfHs ${pair_id}"
+	tag "target Pf ${pair_id}"
 	label 'big_mem'
 
 	publishDir "${params.outdir}/$pair_id"
 
 	input:
-	tuple val(pair_id), path(pf_bam)
+	tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
 	path refdir
 
 	output:
-	tuple val(pair_id), 
-	path("${pair_id}.sorted.dup.pf.bam"),
-	path("${pair_id}.sorted.dup.hs.bam")
-	//file("${pair_id}.sorted.dup.pf.bam.csi")
+	tuple val(pair_id), path("${pair_id}.sorted.dup.pf.bam")
 
 	script:
 	"""
-	# sorting of Pf and Hs aligned reads
-	samtools view -b -h ${pair_id}.sorted.dup.bam -T $refdir/Pf3D7_core.bed -L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
-	samtools view -b -h ${pair_id}.sorted.dup.bam -T $refdir/human.bed -L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
+	# target Pf aligned reads
+	samtools view -b -h ${sorted_dup_bam} \
+	-T $refdir/Pf3D7_human.fa \
+	-L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
 	
-	# samtools index -bc ${pair_id}.sorted.dup.pf.bam
+	samtools index -bc ${pair_id}.sorted.dup.pf.bam
+	"""	
+}
+
+// subsampling human specific bams
+process target_human {
 	
-	# rm ${pair_id}.sorted.dup.bam
+	tag "target Hs ${pair_id}"
+	label 'big_mem'
+
+	publishDir "${params.outdir}/$pair_id"
+
+	input:
+	tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
+	path refdir
+
+	output:
+	tuple val(pair_id), path("${pair_id}.sorted.dup.hs.bam")
+
+	script:
+	"""
+	# target Hs aligned reads
+	samtools view -b -h ${sorted_dup_bam} \
+	-T $refdir/Pf3D7_human.fa \
+	-L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
 	"""	
 }
 
@@ -195,7 +296,12 @@ process insert_sizes {
 	# load modules
 	# module load CBI gatk/4.2.2.0
 
-	gatk CollectInsertSizeMetrics -I ${pf_bam} -O ${pair_id}.insert.txt -H ${pair_id}_histo.pdf -M 0.05
+	gatk CollectInsertSizeMetrics \
+	-I ${pf_bam} \
+	-O ${pair_id}.insert.txt \
+	-H ${pair_id}_histo.pdf \
+	-M 0.05
+
 	awk 'FNR>=8 && FNR<=8 {print \$1,\$3,\$4,\$5,\$6,\$7,\$8,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20,\$NF="${pair_id}"}' ${pair_id}.insert.txt > ${pair_id}.insert2.txt
 	
 	#rm ${pair_id}.insert.txt 
@@ -375,15 +481,15 @@ process run_report {
 	publishDir params.outdir, mode:'copy'
 
 	input:
-	tuple val(pair_id), path('Bam_stats_pf_Final.tsv'), path('Bam_stats_hs_Final.tsv')
+	path bamsum_dir
 	path rscript
 
 	output:
 	file('run_quality_report.html')
 
 	script:
-	"""
-	Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "${params.outdir}"))'
+	"""	
+    Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "$bamsum_dir"))'
 	"""
 }
 
@@ -405,7 +511,7 @@ workflow {
 		//.ifEmpty{error "Cannot find any reads matching: ${params.reads}"}
 
     // trim reads
-    trimmed_reads_ch = trimreads(read_pairs_ch)
+    trimmed_reads_ch = trimreads(read_pairs_ch, params.trimadapter)
     
     // fastqc report 
     fastqc_ch = fastqc(trimmed_reads_ch)
@@ -415,14 +521,15 @@ workflow {
     // bwa alignment
     sam_ch = bwa_align(trimmed_reads_ch, params.refdir)
 
-	// sam file sorting
-	sam_sort_ch = sam_sort(sam_ch, params.refdir)
-	dup_sort_sam_ch = sam_sort_ch.map{T->[T[0],T[1]]}
+	// sam format converter, clean, sort, and mark duplicates
+	sam_format_ch = sam_format_converter(sam_ch, params.refdir)
+	sam_clean_ch = sam_clean(sam_format_ch, params.refdir)
+	sam_sort_ch = sam_sort(sam_clean_ch, params.refdir)
+	sam_dup_ch = sam_duplicates(sam_sort_ch, params.refdir)
 
 	// samtools sorting Pf and human reads
-	bam_ch = sort_pf_human(dup_sort_sam_ch, params.refdir)
-	pf_bam_ch = bam_ch.map{T->[T[0],T[1]]} // select pf bam
-	hs_bam_ch = bam_ch.map{T->[T[0],T[2]]} // select hs bam
+	pf_bam_ch = target_pf(sam_dup_ch, params.refdir)
+	hs_bam_ch = target_human(sam_dup_ch, params.refdir)
 
 	// distribution of Pf read depth by chromosome -- 
 	pf_read_depth(pf_bam_ch, params.refdir) 
@@ -452,8 +559,5 @@ workflow {
 	pf_hs_ratio_calc(summary_ch) 
 
 	// Rmd run quality report generation -- 
-	pf_summary_collect_ch = pf_summary_ch.collect() //collect
-	hs_summary_collect_ch = hs_summary_ch.collect() //collect
-	summary_collect_ch = pf_summary_collect_ch.join(hs_summary_collect_ch) //join 
-	run_report(summary_collect_ch, params.rscript)
+	run_report(params.outdir, params.rscript)
 }
