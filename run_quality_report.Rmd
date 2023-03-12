@@ -7,8 +7,10 @@ output:
     toc: true
     toc_float: true
 params:
-  pf_final: ""
-  hs_final: ""
+  bamsum_pf:
+    value: x
+  bamsum_hs:
+    value: x
 ---
 ```{r setup, include=FALSE}
 
@@ -54,8 +56,8 @@ Total mapped reads to the respective human and *Plasmodium* reference genomes wi
 ```{r pf to hs read ratio, echo=FALSE, warning=FALSE}
 
 
-pf_stats <-read_tsv(file.path(params$pf_final), show_col_types = FALSE)
-hs_stats <-read_tsv(file.path(params$hs_final), show_col_types = FALSE)
+pf_stats <-read_tsv(file.path(params$bamsum_pf), show_col_types = FALSE)
+hs_stats <-read_tsv(file.path(params$bamsum_hs), show_col_types = FALSE)
 
 colnames(pf_stats) <- gsub(",","",colnames(pf_stats))
 colnames(hs_stats) <- gsub(",","", colnames(hs_stats))
