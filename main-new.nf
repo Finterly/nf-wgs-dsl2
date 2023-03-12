@@ -481,17 +481,15 @@ process run_report {
 	publishDir params.outdir, mode:'copy'
 
 	input:
-	tuple val(pair_id), path(stats_pf_tsv), path(stats_hs_tsv)
+	path bamsum_dir
 	path rscript
 
 	output:
 	file('run_quality_report.html')
 
 	script:
-	"""
-	# Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(pf_file = ${stats_pf_tsv}, hs_file = ${stats_hs_tsv}))'
-	
-    Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "${params.outdir}"))'
+	"""	
+    Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "$bamsum_dir"))'
 	"""
 }
 
@@ -561,8 +559,5 @@ workflow {
 	pf_hs_ratio_calc(summary_ch) 
 
 	// Rmd run quality report generation -- 
-	pf_summary_collect_ch = pf_summary_ch.collect() //collect
-	hs_summary_collect_ch = hs_summary_ch.collect() //collect
-	summary_collect_ch = pf_summary_collect_ch.join(hs_summary_collect_ch) //join 
-	//run_report(summary_collect_ch, params.rscript)
+	run_report(params.outdir, params.rscript)
 }
