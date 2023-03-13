@@ -420,7 +420,7 @@ process pf_hs_ratio_calc {
 	publishDir params.outdir, mode:'copy'
 	
 	input: 
-	path(bamsum_pf), path(bamsum_hs)
+	tuple path(bamsum_pf), path(bamsum_hs)
 
 	output:
 	file('Ratios_hs_pf_reads.tsv')
@@ -477,7 +477,7 @@ process run_report {
 	publishDir params.outdir, mode:'copy'
 
 	input:
-	path(bamsum_pf), path(bamsum_hs)
+	tuple path(bamsum_pf), path(bamsum_hs)
 	path bamsum_dir
 	path rscript
 
@@ -552,6 +552,7 @@ workflow {
 
 	// Pf:Hs read ratio calculation -- 
 	summary_ch = pf_summary_ch.join(hs_summary_ch) //join 
+	summary_ch.view()
 	pf_hs_ratio_calc(summary_ch) 
 
 	// Rmd run quality report generation -- 
