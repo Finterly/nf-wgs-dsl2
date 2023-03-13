@@ -551,8 +551,7 @@ workflow {
 	hs_summary_ch = hs_stat_summary(hs_final_bamstat_ch.collect())
 
 	// Pf:Hs read ratio calculation -- 
-	summary_ch = pf_summary_ch.join(hs_summary_ch) //join 
-	summary_ch.view()
+	summary_ch = pf_summary_ch.combine(hs_summary_ch) //combine 
 	pf_hs_ratio_calc(summary_ch) 
 
 	// Rmd run quality report generation -- 
