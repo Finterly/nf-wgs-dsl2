@@ -56,7 +56,7 @@ process fastqc {
     tuple val(pair_id), path(paired_reads), path(unpaired_reads)
 
     output:
-    tuple val(pair_id), path("fastqc_${pair_id}")
+    path("fastqc_${pair_id}")
 
     conda 'bioconda::fastqc'
    
@@ -316,10 +316,10 @@ process insert_summary {
 	publishDir params.outdir, mode:'copy'
 
 	input:
-	tuple val(pair_id), path(insert2_collection)
+	path(insert2_collection)
 
 	output:
-	tuple val(pair_id), path('InsertSize_Final.tsv')
+	path('InsertSize_Final.tsv')
 
 	script:
 	"""
@@ -360,15 +360,14 @@ process pf_stat_summary {
 	publishDir params.outdir, mode:'copy'
 
 	input:
-	tuple val(pair_id), path(bamstat_pf) 
+	path(bamstat_pf) 
 
 	output:
-	tuple val(pair_id), path('Bam_stats_pf_Final.tsv') 
+	path('Bam_stats_pf_Final.tsv') 
 
 	script:
 	"""
 	cat $bamstat_pf  | sed '1irow_total_reads_pf	filtered_reads_pf	sequences_pf	is_sorted_pf	1st_fragments_pf	last_fragments_pf	reads_mapped_pf	reads_mapped_and_paired_pf	reads_unmapped_pf	reads_properly_paired_pf	reads_paired_pf	reads_duplicated_pf	reads_MQ0_pf	reads_QC_failed_pf	non_primary_alignments_pf	total_length_pf	total_first_fragment_length_pf	total_last_fragment_length_pf	bases_mapped_pf	bases_mapped_(cigar)_pf	bases_trimmed_pf	bases_duplicated_pf	mismatches_pf	error_rate_pf	average_length_pf	average_first_fragment_length_pf	average_last_fragment_length_pf	maximum_length_pf	maximum_first_fragment_length_pf	maximum_last_fragment_length_pf	average_quality_pf	insert_size_average_pf	insert_size_standard_deviation_pf	inward_oriented pairs_pf	outward_oriented_pairs_pf	pairs_with_other_orientation_pf	pairs_on_different_chromosomes_pf	percentage_of_properly_paired_reads_(%)_pf	sample_id' > Bam_stats_pf_Final.tsv
-	#rm *_bamstat_pf_final.tsv
 	"""
 }
 
@@ -392,8 +391,6 @@ process hs_bam_stat_per_sample {
     samtools stats ${hs_bam} | grep ^SN | cut -f 2- | awk -F"\t" '{print \$2}' > ${pair_id}_bamstat_hs.tsv
 
     datamash transpose < ${pair_id}_bamstat_hs.tsv | awk -F"\t" -v OFS="\t" '{ \$(NF+1) = "${pair_id}"; print }' > ${pair_id}_bamstat_hs_final.tsv
-
-    #rm ${pair_id}_bamstat_hs.tsv
     """
 }
 
@@ -404,15 +401,14 @@ process hs_stat_summary {
 	publishDir params.outdir, mode:'copy'
 
 	input:
-	tuple val(pair_id), path(bamstat_hs)
+	path(bamstat_hs)
 
 	output:
-	tuple val(pair_id), path('Bam_stats_hs_Final.tsv')
+	path('Bam_stats_hs_Final.tsv')
 
 	script:
 	"""
 	cat $bamstat_hs | sed '1irow_total_reads_hs	filtered_reads_hs	sequences_hs	is_sorted_hs	1st_fragments_hs	last_fragments_hs	reads_mapped_hs	reads_mapped_and_paired_hs	reads_unmapped_hs	reads_properly_paired_hs	reads_paired_hs	reads_duplicated_hs	reads_MQ0_hs	reads_QC_failed_hs	non_primary_alignments_hs	total_length_hs	total_first_fragment_length_hs	total_last_fragment_length_hs	bases_mapped_hs	bases_mapped_(cigar)_hs	bases_trimmed_hs	bases_duplicated_hs	mismatches_hs	error_rate_hs	average_length_hs	average_first_fragment_length_hs	average_last_fragment_length_hs	maximum_length_hs	maximum_first_fragment_length_hs	maximum_last_fragment_length_hs	average_quality_hs	insert_size_average_hs	insert_size_standard_deviation_hs	inward_oriented pairs_hs	outward_oriented_pairs_hs	pairs_with_other_orientation_hs	pairs_on_different_chromosomes_hs	percentage_of_properly_paired_reads_(%)_hs	sample_id' > Bam_stats_hs_Final.tsv
-	#rm *_bamstat_hs_final.tsv
 	"""
 }
 
@@ -424,7 +420,7 @@ process pf_hs_ratio_calc {
 	publishDir params.outdir, mode:'copy'
 	
 	input: 
-	tuple val(pair_id), path(bamsum_pf), path(bamsum_hs)
+	path(bamsum_pf), path(bamsum_hs)
 
 	output:
 	file('Ratios_hs_pf_reads.tsv')
@@ -481,7 +477,7 @@ process run_report {
 	publishDir params.outdir, mode:'copy'
 
 	input:
-	tuple val(pair_id), path(bamsum_pf), path(bamsum_hs)
+	path(bamsum_pf), path(bamsum_hs)
 	path bamsum_dir
 	path rscript
 
@@ -537,21 +533,20 @@ workflow {
 
 	// insert size calculation
 	inserts_ch = insert_sizes(pf_bam_ch) 
-	insert2_ch = inserts_ch.map{T->[T[0],T[2]]} // select *.insert2.txt
-
+	insert2_ch = inserts_ch.map{T->[T[2]]} // select *.insert2.txt
 	// insert summary -- 
 	insert_summary(insert2_ch.collect()) 
 
 	// Pf bam statistics by sample
 	pf_bamstat_ch = pf_bam_stat_per_sample(pf_bam_ch)
-	pf_final_bamstat_ch = pf_bamstat_ch.map{T->[T[0],T[1]]} // select *_bamstat_pf_final.tsv
+	pf_final_bamstat_ch = pf_bamstat_ch.map{T->[T[1]]} // select *_bamstat_pf_final.tsv
 	// Pf bam statistic summary
 	pf_summary_ch = pf_stat_summary(pf_final_bamstat_ch.collect()) 
 
 
 	// Hs bam statistics by sample
 	hs_bamstat_ch = hs_bam_stat_per_sample(hs_bam_ch)
-	hs_final_bamstat_ch = hs_bamstat_ch.map{T->[T[0],T[1]]} // select *_bamstat_hs_final.tsv
+	hs_final_bamstat_ch = hs_bamstat_ch.map{T->[T[1]]} // select *_bamstat_hs_final.tsv
 	// Hs bam statistic summary
 	hs_summary_ch = hs_stat_summary(hs_final_bamstat_ch.collect())
 
