@@ -12,22 +12,13 @@ date
 hostname
 
 ## End-of-job summary, if running as a job
-[[ -n "\$JOB_ID" ]] && qstat -j "\$JOB_ID"  # This is useful for debugging and usage purposes,
+[[ -n "$JOB_ID" ]] && qstat -j "$JOB_ID"  # This is useful for debugging and usage purposes,
                                          # e.g. "did my job exceed its memory request?
 
 INPUT=/wynton/scratch/finterly/data/10252022_nextera_run
 OUTPUT=/wynton/scratch/finterly/results_10252022_nextera_run
 TRIM=/wynton/scratch/finterly/new_workflow/adapters/NexteraPE-custom.fa
 
-NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer --inputdir \$INPUT --outdir \$OUTPUT --trimadapter \$TRIM 
-
-exit 0
-
-PROPERTIES
-#----------End SGE Script----------#
-
-qsub -cwd $SUBMIT
-
-cd ..
+NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT --trimadapter $TRIM 
 
 exit 0
