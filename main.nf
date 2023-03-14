@@ -247,7 +247,7 @@ process target_pf {
 	"""
 	# target Pf aligned reads
 	samtools view -b -h ${sorted_dup_bam} \
-	-T $refdir/Pf3D7_human.fa \
+	-T $refdir/Pf3D7.fasta \
 	-L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
 	
 	samtools index -bc ${pair_id}.sorted.dup.pf.bam
@@ -273,7 +273,7 @@ process target_human {
 	"""
 	# target Hs aligned reads
 	samtools view -b -h ${sorted_dup_bam} \
-	-T $refdir/Pf3D7_human.fa \
+	-T $refdir/genome.fa \
 	-L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
 	"""	
 }
