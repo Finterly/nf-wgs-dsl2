@@ -29,8 +29,8 @@ hostname
 [[ -n "\$JOB_ID" ]] && qstat -j "\$JOB_ID"  # This is useful for debugging and usage purposes,
                                          # e.g. "did my job exceed its memory request?
 
-INPUT=/wynton/scratch/finterly/10252022_nextera_run
-OUTPUT=/wynton/home/eppicenter/finterly/results_nextera_run
+INPUT=/wynton/scratch/finterly/data/10252022_nextera_run
+OUTPUT=/wynton/home/eppicenter/finterly/results_10252022_nextera_run
 TRIM=/wynton/home/eppicenter/finterly/kn_test/workflow/adapters/NexteraPE-custom.fa
 
 NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer --inputdir \$INPUT --outdir \$OUTPUT --trimadapter \$TRIM 
