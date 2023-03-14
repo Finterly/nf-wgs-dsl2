@@ -1,17 +1,3 @@
-#!/usr/bin/env bash
-
-REPO=https://github.com/Finterly/nf-wgs-dsl2.git
-BRANCH=changes-for-v0.0.6
-STAMP=$(date +%H%m%M%S)
-MAIN=$BRANCH-$STAMP
-git clone -b $BRANCH --single-branch $REPO $MAIN
-
-echo $MAIN
-cd $MAIN
-
-SUBMIT="script.sh"
-#--------Begin SGE Script-----------#
-cat > $SUBMIT <<- PROPERTIES
 #!/bin/bash           # the shell language when run outside of the job scheduler
 #                     # lines starting with #$ is an instruction to the job scheduler
 #$ -S /bin/bash       # the shell language when run via the job scheduler [IMPORTANT]
@@ -30,8 +16,8 @@ hostname
                                          # e.g. "did my job exceed its memory request?
 
 INPUT=/wynton/scratch/finterly/data/10252022_nextera_run
-OUTPUT=/wynton/home/eppicenter/finterly/results_10252022_nextera_run
-TRIM=/wynton/home/eppicenter/finterly/kn_test/workflow/adapters/NexteraPE-custom.fa
+OUTPUT=/wynton/scratch/finterly/results_10252022_nextera_run
+TRIM=/wynton/scratch/finterly/new_workflow/adapters/NexteraPE-custom.fa
 
 NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer --inputdir \$INPUT --outdir \$OUTPUT --trimadapter \$TRIM 
 
