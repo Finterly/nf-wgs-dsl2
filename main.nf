@@ -75,7 +75,7 @@ process multiqc {
     publishDir params.outdir, mode:'copy'
        
     input:
-    tuple val(pair_id), path(fastqc_results)
+    path(fastqc_results)
     
     output:
     file('multiqc_report.html')  
