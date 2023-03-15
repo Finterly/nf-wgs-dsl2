@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// kniare part I of WGS processing for variant calling
+// Part I of WGS processing for variant calling
 
 params.refdir = "$projectDir/genomes"
 params.rscript = "$projectDir/run_quality_report.Rmd"
@@ -104,12 +104,7 @@ process bwa_align {
 	tuple val(pair_id), path("${pair_id}.sam")
 	
 	script:
-
 	"""
-	# load modules
-	# module load CBI bwa
-
-	# alignment and populate read group header
 	bwa mem -t ${params.max_threads} \
 	-M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" \
 	$refdir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
@@ -131,8 +126,8 @@ process sam_format_converter {
 	output:
 	tuple val(pair_id), path("${pair_id}.bam")
 
+	script:
 	"""
-	# sam format converter
 	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter \
 	-R $refdir/Pf3D7_human.fa \
 	-I ${sam_file} \
@@ -157,8 +152,8 @@ process sam_clean {
 	output:
 	tuple val(pair_id), path("${pair_id}.clean.bam")
 
+	script:
 	"""
-	# clean sam
     gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam \
 	-R $refdir/Pf3D7_human.fa \
 	-I ${bam_file} \
@@ -184,7 +179,12 @@ process sam_sort {
 	output:
 	tuple val(pair_id), path("${pair_id}.sorted.bam")
 
+	afterScript "rm -rf TMP"
+
+	script: 
 	"""
+	mkdir -p TMP
+
 	# sam file sorting
     gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam \
 	-R $refdir/Pf3D7_human.fa \
@@ -192,7 +192,7 @@ process sam_sort {
 	-O ${pair_id}.sorted.bam \
 	-SO coordinate \
 	--CREATE_INDEX true \
-	--TMP_DIR .
+	--TMP_DIR TMP
 
    	# rm ${clean_bam}
     """
@@ -215,15 +215,19 @@ process sam_duplicates {
 	tuple val(pair_id), path("${pair_id}.sorted.dup.bam"),
 	path("${pair_id}_dup_metrics.txt")
 
+	afterScript "rm -rf TMP"
+
+	script:
 	"""
-	# mark duplicates
+	mkdir -p TMP
+
     gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates \
 	-R $refdir/Pf3D7_human.fa \
 	-I ${sorted_bam} \
 	-O ${pair_id}.sorted.dup.bam \
 	-M ${pair_id}_dup_metrics.txt \
 	-ASO coordinate \
-	--TMP_DIR .
+	--TMP_DIR TMP
     
 	# rm ${sorted_bam}
     """
@@ -245,7 +249,6 @@ process target_pf {
 
 	script:
 	"""
-	# target Pf aligned reads
 	samtools view -b -h ${sorted_dup_bam} \
 	-T $refdir/Pf3D7.fasta \
 	-L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
@@ -271,7 +274,6 @@ process target_human {
 
 	script:
 	"""
-	# target Hs aligned reads
 	samtools view -b -h ${sorted_dup_bam} \
 	-T $refdir/genome.fa \
 	-L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
@@ -293,9 +295,6 @@ process insert_sizes {
 	
 	script:
 	"""
-	# load modules
-	# module load CBI gatk/4.2.2.0
-
 	gatk CollectInsertSizeMetrics \
 	-I ${pf_bam} \
 	-O ${pair_id}.insert.txt \
@@ -303,7 +302,6 @@ process insert_sizes {
 	-M 0.05
 
 	awk 'FNR>=8 && FNR<=8 {print \$1,\$3,\$4,\$5,\$6,\$7,\$8,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20,\$NF="${pair_id}"}' ${pair_id}.insert.txt > ${pair_id}.insert2.txt
-	
 	"""
 }
 
@@ -346,8 +344,6 @@ process pf_bam_stat_per_sample {
     samtools stats ${pf_bam} | grep ^SN | cut -f 2- | awk -F"\t" '{print \$2}' > ${pair_id}_bamstat_pf.tsv
     
     datamash transpose < ${pair_id}_bamstat_pf.tsv | awk -F"\t" -v OFS="\t" '{ \$(NF+1) = "${pair_id}"; print }' > ${pair_id}_bamstat_pf_final.tsv
-
-    #rm ${pair_id}_bamstat_pf.tsv
     """
 }
 
@@ -446,10 +442,11 @@ process pf_read_depth {
 	output:
 	file("ReadCoverage_final_${pair_id}.tsv")
 
-	script:
+	afterScript "rm -rf TMP"
+
+	script: 
 	"""
-	# load modules
-	# module load CBI samtools gatk/4.2.2.0
+	mkdir -p TMP
 
 	samtools index -bc ${pf_bam}
 
@@ -460,7 +457,7 @@ process pf_read_depth {
 		   -O chr"\$i" \
 		   -L Pf3D7_"\$i"_v3 \
 		   --omit-locus-table true \
-		   -I ${pf_bam} --tmp-dir /tmp
+		   -I ${pf_bam} --tmp-dir TMP
 	       awk -F"," -v OFS="\t" '{ print \$0, \$(NF+1) = '"chr\$i"' }' chr"\$i".sample_summary > chr"\$i".sample2_summary
 	    done
 
