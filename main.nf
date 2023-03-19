@@ -473,8 +473,7 @@ process run_report {
 	publishDir params.outdir, mode:'copy'
 
 	input:
-	tuple path(bamsum_pf), path(bamsum_hs)
-	path bamsum_dir
+	path report_files
 	path rscript
 
 	output:
@@ -482,7 +481,7 @@ process run_report {
 
 	script:
 	"""	
-    Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "$bamsum_dir"))'
+    Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "$report_files"))'
 	"""
 }
 
@@ -551,5 +550,7 @@ workflow {
 	pf_hs_ratio_calc(summary_ch) 
 
 	// Rmd run quality report generation -- 
-	run_report(summary_ch, params.outdir, params.rscript)
+	insert1_ch = inserts_ch.map{T->[T[1]]} // select *.insert.txt
+	report_files_ch = summary_ch.combine(insert1_ch.collect()) //combine
+	run_report(report_files_ch, params.rscript)
 }
