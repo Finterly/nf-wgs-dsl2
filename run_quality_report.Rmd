@@ -108,7 +108,7 @@ ggplotly(p2, width = 600)
 Note to user: sequencing libraries containing fragments with shorter than intended insert sizes may influence downstream variant calling performance.
 
 ```{r insert sizes, include = FALSE}
-insert_files <- list.files(pattern = "insert.txt", recursive = TRUE, full.names = TRUE)
+insert_files <- list.files(path = params$directory, pattern = "insert.txt", recursive = TRUE, full.names = TRUE)
 
 insert_table <- data.table()
 
