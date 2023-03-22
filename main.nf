@@ -252,8 +252,6 @@ process target_pf {
 	samtools view -b -h ${sorted_dup_bam} \
 	-T $refdir/Pf3D7.fasta \
 	-L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
-	
-	samtools index -bc ${pair_id}.sorted.dup.pf.bam
 	"""	
 }
 
@@ -440,7 +438,7 @@ process pf_read_depth {
 	path refdir
 
 	output:
-	file("ReadCoverage_final_${pair_id}.tsv")
+	file("${pair_id}_read_coverage.tsv")
 
 	afterScript "rm -rf TMP"
 
@@ -452,16 +450,37 @@ process pf_read_depth {
 
 	for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 	    do
-	       gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" DepthOfCoverage \
-		   -R "$refdir/Pf3D7.fasta" \
-		   -O chr"\$i" \
-		   -L Pf3D7_"\$i"_v3 \
-		   --omit-locus-table true \
-		   -I ${pf_bam} --tmp-dir TMP
-	       awk -F"," -v OFS="\t" '{ print \$0, \$(NF+1) = '"chr\$i"' }' chr"\$i".sample_summary > chr"\$i".sample2_summary
+	    	gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" DepthOfCoverage \
+			-R "$refdir/Pf3D7.fasta" \
+			-O chr"\$i" \
+			--output-format TABLE \
+			-L Pf3D7_"\$i"_v3 \
+			--omit-locus-table true \
+			-I ${pf_bam} --tmp-dir TMP
+			sed '\${/^Total/d;}' chr"\$i".sample_summary > tmp.chr"\$i".sample_summary
+			awk -F"\t" -v OFS="\t" '{ print \$0, \$(NF) = "chr'\$i'" }' tmp.chr"\$i".sample_summary > chr"\$i".sample2_summary
 	    done
 
-	cat *.sample2_summary | awk '!/sample_id/ {print \$0}' | sed '1isample_id, total, mean, third_quartile, median, first_quartile, bases_perc_above_15, chromosome' > ReadCoverage_final_${pair_id}.tsv
+	cat *.sample2_summary | awk '!/sample_id/ {print \$0}' | sed '1isample_id	total	mean	third_quartile	median	first_quartile	bases_perc_above_15	chromosome' > ${pair_id}_read_coverage.tsv
+	"""
+}
+
+// concatenate Pf read depth by chromosome summaries
+process pf_read_depth_summary {
+	
+	tag "read depth Pf chroms summary"
+
+	publishDir params.outdir, mode:'copy'
+
+	input:
+	path(read_coverage)
+
+	output:
+	file("ReadCoverage_final.tsv")
+
+	script: 
+	"""
+	cat $read_coverage | awk '!/sample_id/ {print \$0}' | sed '1isample_id	total	mean	third_quartile	median	first_quartile	bases_perc_above_15	chromosome' > ReadCoverage_final.tsv
 	"""
 }
 
@@ -529,7 +548,8 @@ workflow {
 	hs_bam_ch = target_human(sam_dup_ch, params.refdir)
 
 	// distribution of Pf read depth by chromosome -- 
-	pf_read_depth(pf_bam_ch, params.refdir) 
+	pf_read_depth_ch = pf_read_depth(pf_bam_ch, params.refdir) 
+	pf_read_depth_summary(pf_read_depth_ch.collect())
 
 	// insert size calculation
 	inserts_ch = insert_sizes(pf_bam_ch) 
@@ -542,7 +562,6 @@ workflow {
 	pf_final_bamstat_ch = pf_bamstat_ch.map{T->[T[1]]} // select *_bamstat_pf_final.tsv
 	// Pf bam statistic summary
 	pf_summary_ch = pf_stat_summary(pf_final_bamstat_ch.collect()) 
-
 
 	// Hs bam statistics by sample
 	hs_bamstat_ch = hs_bam_stat_per_sample(hs_bam_ch)
