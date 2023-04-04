@@ -518,7 +518,7 @@ process run_report_and_calculate_ratio {
 	path rscript
 
 	output:
-	file('Ratios_hs_pf_reads.tsv'), file('run_quality_report.html')
+	tuple file('Ratios_hs_pf_reads.tsv'), file('run_quality_report.html')
 
 	afterScript "rm -rf TMP"
 
