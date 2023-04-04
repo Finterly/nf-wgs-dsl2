@@ -41,7 +41,7 @@ process trimreads {
 	script:
 	"""
 	trimmomatic PE ${reads[0]} ${reads[1]} \
-	"trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" "trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:3 SLIDINGWINDOW:5:20 -threads ${params.max_threads}
+	"trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" "trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:36 SLIDINGWINDOW:5:20 -threads ${params.max_threads}
 	"""
 }
 
@@ -289,7 +289,7 @@ process insert_sizes {
 	tuple val(pair_id), path(pf_bam)
 
 	output:
-	tuple val(pair_id), path("${pair_id}.insert.txt"), path("${pair_id}.insert2.txt")
+	tuple val(pair_id), path("${pair_id}.insert.txt"), path("${pair_id}.insert2.txt"), path("${pair_id}_histo.pdf")
 	
 	script:
 	"""
@@ -319,6 +319,48 @@ process insert_summary {
 	script:
 	"""
 	cat $insert2_collection > InsertSize_Final.tsv
+	"""
+}
+
+// Total bam statistics by sample
+process total_bam_stat_per_sample {
+	
+	tag "Total bam stat ${pair_id}"
+
+	publishDir "${params.outdir}/$pair_id/stat_dir"
+	
+	input: 
+	tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
+
+	output:
+	tuple val(pair_id), path("${pair_id}_bamstat_total_final.tsv"), path("${pair_id}_bamstat_total.tsv")
+
+	conda 'bioconda::samtools bioconda::datamash'
+
+	script:
+	"""
+    samtools stats ${pf_bam} | grep ^SN | cut -f 2- | awk -F"\t" '{print \$2}' > ${pair_id}_bamstat_total.tsv
+    
+    datamash transpose < ${pair_id}_bamstat_total.tsv | awk -F"\t" -v OFS="\t" '{ \$(NF+1) = "${pair_id}"; print }' > ${pair_id}_bamstat_total_final.tsv
+    """
+}
+
+// Total bam statistic summary
+process total_stat_summary {
+	
+	tag "Total stat summary"
+
+	publishDir params.outdir, mode:'copy'
+
+	input:
+	path(bamstat_total) 
+
+	output:
+	path('Bam_stats_Total_Final.tsv') 
+
+	script:
+	"""
+	cat $bamstat_total  | sed '1irow_total_reads_total	filtered_reads_total	sequences_total	is_sorted_total	1st_fragments_total	last_fragments_total	reads_mapped_total	reads_mapped_and_paired_total	reads_unmapped_total	reads_properly_paired_total	reads_paired_total	reads_duplicated_total	reads_MQ0_total	reads_QC_failed_total	non_primary_alignments_total	total_length_total	total_first_fragment_length_total	total_last_fragment_length_total	bases_mapped_total	bases_mapped_(cigar)_total	bases_trimmed_total	bases_duplicated_total	mismatches_total	error_rate_total	average_length_total	average_first_fragment_length_total	average_last_fragment_length_total	maximum_length_total	maximum_first_fragment_length_total	maximum_last_fragment_length_total	average_quality_total	insert_size_average_total	insert_size_standard_deviation_total	inward_oriented_pairs_total	outward_oriented_pairs_total	pairs_with_other_orientation_total	pairs_on_different_chromosomes_total	percentage_of_properly_paired_reads_(%)_total	sample_id' > Bam_stats_total_Final.tsv
 	"""
 }
 
@@ -360,7 +402,7 @@ process pf_stat_summary {
 
 	script:
 	"""
-	cat $bamstat_pf  | sed '1irow_total_reads_pf	filtered_reads_pf	sequences_pf	is_sorted_pf	1st_fragments_pf	last_fragments_pf	reads_mapped_pf	reads_mapped_and_paired_pf	reads_unmapped_pf	reads_properly_paired_pf	reads_paired_pf	reads_duplicated_pf	reads_MQ0_pf	reads_QC_failed_pf	non_primary_alignments_pf	supplementary_alignments_pf	total_length_pf	total_first_fragment_length_pf	total_last_fragment_length_pf	bases_mapped_pf	bases_mapped_(cigar)_pf	bases_trimmed_pf	bases_duplicated_pf	mismatches_pf	error_rate_pf	average_length_pf	average_first_fragment_length_pf	average_last_fragment_length_pf	maximum_length_pf	maximum_first_fragment_length_pf	maximum_last_fragment_length_pf	average_quality_pf	insert_size_average_pf	insert_size_standard_deviation_pf	inward_oriented pairs_pf	outward_oriented_pairs_pf	pairs_with_other_orientation_pf	pairs_on_different_chromosomes_pf	percentage_of_properly_paired_reads_(%)_pf	sample_id' > Bam_stats_pf_Final.tsv
+	cat $bamstat_pf  | sed '1irow_total_reads_pf	filtered_reads_pf	sequences_pf	is_sorted_pf	1st_fragments_pf	last_fragments_pf	reads_mapped_pf	reads_mapped_and_paired_pf	reads_unmapped_pf	reads_properly_paired_pf	reads_paired_pf	reads_duplicated_pf	reads_MQ0_pf	reads_QC_failed_pf	non_primary_alignments_pf	total_length_pf	total_first_fragment_length_pf	total_last_fragment_length_pf	bases_mapped_pf	bases_mapped_(cigar)_pf	bases_trimmed_pf	bases_duplicated_pf	mismatches_pf	error_rate_pf	average_length_pf	average_first_fragment_length_pf	average_last_fragment_length_pf	maximum_length_pf	maximum_first_fragment_length_pf	maximum_last_fragment_length_pf	average_quality_pf	insert_size_average_pf	insert_size_standard_deviation_pf	inward_oriented_pairs_pf	outward_oriented_pairs_pf	pairs_with_other_orientation_pf	pairs_on_different_chromosomes_pf	percentage_of_properly_paired_reads_(%)_pf	sample_id' > Bam_stats_pf_Final.tsv
 	"""
 }
 
@@ -401,7 +443,7 @@ process hs_stat_summary {
 
 	script:
 	"""
-	cat $bamstat_hs | sed '1irow_total_reads_hs	filtered_reads_hs	sequences_hs	is_sorted_hs	1st_fragments_hs	last_fragments_hs	reads_mapped_hs	reads_mapped_and_paired_hs	reads_unmapped_hs	reads_properly_paired_hs	reads_paired_hs	reads_duplicated_hs	reads_MQ0_hs	reads_QC_failed_hs	non_primary_alignments_hs	supplementary_alignments_hs	total_length_hs	total_first_fragment_length_hs	total_last_fragment_length_hs	bases_mapped_hs	bases_mapped_(cigar)_hs	bases_trimmed_hs	bases_duplicated_hs	mismatches_hs	error_rate_hs	average_length_hs	average_first_fragment_length_hs	average_last_fragment_length_hs	maximum_length_hs	maximum_first_fragment_length_hs	maximum_last_fragment_length_hs	average_quality_hs	insert_size_average_hs	insert_size_standard_deviation_hs	inward_oriented pairs_hs	outward_oriented_pairs_hs	pairs_with_other_orientation_hs	pairs_on_different_chromosomes_hs	percentage_of_properly_paired_reads_(%)_hs	sample_id' > Bam_stats_hs_Final.tsv
+	cat $bamstat_hs | sed '1irow_total_reads_hs	filtered_reads_hs	sequences_hs	is_sorted_hs	1st_fragments_hs	last_fragments_hs	reads_mapped_hs	reads_mapped_and_paired_hs	reads_unmapped_hs	reads_properly_paired_hs	reads_paired_hs	reads_duplicated_hs	reads_MQ0_hs	reads_QC_failed_hs	non_primary_alignments_hs	total_length_hs	total_first_fragment_length_hs	total_last_fragment_length_hs	bases_mapped_hs	bases_mapped_(cigar)_hs	bases_trimmed_hs	bases_duplicated_hs	mismatches_hs	error_rate_hs	average_length_hs	average_first_fragment_length_hs	average_last_fragment_length_hs	maximum_length_hs	maximum_first_fragment_length_hs	maximum_last_fragment_length_hs	average_quality_hs	insert_size_average_hs	insert_size_standard_deviation_hs	inward_oriented_pairs_hs	outward_oriented_pairs_hs	pairs_with_other_orientation_hs	pairs_on_different_chromosomes_hs	percentage_of_properly_paired_reads_(%)_hs	sample_id' > Bam_stats_hs_Final.tsv
 	"""
 }
 
@@ -556,6 +598,12 @@ workflow {
 	insert2_ch = inserts_ch.map{T->[T[2]]} // select *.insert2.txt
 	// insert summary -- 
 	insert_summary(insert2_ch.collect()) 
+
+	// Total bam statistics by sample
+	total_bamstat_ch = total_bam_stat_per_sample(sam_dup_ch)
+	total_final_bamstat_ch = total_bamstat_ch.map{T->[T[1]]} // select *_bamstat_total_final.tsv
+	// Total bam statistic summary
+	total_summary_ch = total_stat_summary(total_final_bamstat_ch.collect()) 
 
 	// Pf bam statistics by sample
 	pf_bamstat_ch = pf_bam_stat_per_sample(pf_bam_ch)
