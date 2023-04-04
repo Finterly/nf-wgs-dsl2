@@ -507,9 +507,9 @@ process pf_read_depth_summary {
 }
 
 // Rmd run quality report generation
-process run_report {
+process run_report_and_calculate_ratio {
  
-	tag "Run quality report"
+	tag "Run quality report and calculate Pf:Hs ratio"
 
 	publishDir params.outdir, mode:'copy'
 
@@ -597,9 +597,9 @@ workflow {
 	// Hs bam statistic summary
 	hs_summary_ch = hs_stat_summary(hs_final_bamstat_ch.collect())
 
-	// Rmd run quality report generation (Includes Pf:Hs read ratio calculation) -- 
+	// Rmd run quality report generation and Calculate Pf:Hs read ratio -- 
 	summary_ch = pf_summary_ch.combine(hs_summary_ch) //combine 
 	insert1_ch = inserts_ch.map{T->[T[1]]} // select *.insert.txt
 	report_files_ch = summary_ch.combine(insert1_ch.collect()) //combine
-	run_report(report_files_ch, params.rscript)
+	run_report_and_calculate_ratio(report_files_ch, params.rscript)
 }
