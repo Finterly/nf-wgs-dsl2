@@ -339,7 +339,7 @@ process total_bam_stat_per_sample {
 
 	script:
 	"""
-    samtools stats ${pf_bam} | grep ^SN | cut -f 2- | awk -F"\t" '{print \$2}' > ${pair_id}_bamstat_total.tsv
+    samtools stats ${sorted_dup_bam} | grep ^SN | cut -f 2- | awk -F"\t" '{print \$2}' > ${pair_id}_bamstat_total.tsv
     
     datamash transpose < ${pair_id}_bamstat_total.tsv | awk -F"\t" -v OFS="\t" '{ \$(NF+1) = "${pair_id}"; print }' > ${pair_id}_bamstat_total_final.tsv
     """
@@ -447,26 +447,6 @@ process hs_stat_summary {
 	"""
 }
 
-// Pf:Hs read ratio calculation
-process pf_hs_ratio_calc {
-	
-	tag "Pf:Hs ratio"
-
-	publishDir params.outdir, mode:'copy'
-	
-	input: 
-	tuple path(bamsum_pf), path(bamsum_hs)
-
-	output:
-	file('Ratios_hs_pf_reads.tsv')
-
-	shell:
-	'''
-	paste !{bamsum_pf} !{bamsum_hs} | awk -v OFS="\t" '!/per/ {print$40,$7,$47}' | awk '{if($2==0) $2=1}1' |  awk '{if($3==0) $3=1}1' | awk -v OFS="\t" '{print$1,$2,$3,($3/$2)}' | sed '1ireads_mapped_pf, reads_mapped_hs, ratio_hs_pf' > Ratios_hs_pf_reads.tsv
-	'''
-
-}
-
 // distribution of Pf read depth by chromosome
 process pf_read_depth {
 	
@@ -538,7 +518,7 @@ process run_report {
 	path rscript
 
 	output:
-	file('run_quality_report.html')
+	file('Ratios_hs_pf_reads.tsv'), file('run_quality_report.html')
 
 	afterScript "rm -rf TMP"
 
@@ -617,11 +597,8 @@ workflow {
 	// Hs bam statistic summary
 	hs_summary_ch = hs_stat_summary(hs_final_bamstat_ch.collect())
 
-	// Pf:Hs read ratio calculation -- 
+	// Rmd run quality report generation (Includes Pf:Hs read ratio calculation) -- 
 	summary_ch = pf_summary_ch.combine(hs_summary_ch) //combine 
-	pf_hs_ratio_calc(summary_ch) 
-
-	// Rmd run quality report generation -- 
 	insert1_ch = inserts_ch.map{T->[T[1]]} // select *.insert.txt
 	report_files_ch = summary_ch.combine(insert1_ch.collect()) //combine
 	run_report(report_files_ch, params.rscript)

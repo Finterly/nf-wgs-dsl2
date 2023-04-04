@@ -50,13 +50,22 @@ For evaluation of read quality and adapter trimming efficiency, see the file:
 
 ### *P.falciparum* vs *H.sapiens* mapped reads
 
+```{r hs to pf read ratio table, echo=FALSE, warning=FALSE}
+pf_stats <-read_tsv(file.path(params$directory, "Bam_stats_pf_Final.tsv"), show_col_types = FALSE)
+hs_stats <-read_tsv(file.path(params$directory, "Bam_stats_hs_Final.tsv"), show_col_types = FALSE)
+
+# here we output the Ratios_hs_pf_reads.tsv table 
+ratio_table <- pf_stats %>%
+  select(sample_id, reads_mapped_pf) %>%
+  left_join(hs_stats %>% select(sample_id, reads_mapped_hs), by = "sample_id") %>%
+  mutate(ratio_hs_pf = reads_mapped_hs/reads_mapped_pf) 
+
+write.table(ratio_table, file='Ratios_hs_pf_reads.tsv', sep='\t', quote=FALSE, row.names=FALSE)
+```
+
 Total mapped reads to the respective human and *Plasmodium* reference genomes within each sample.
 
 ```{r pf to hs read ratio, echo=FALSE, warning=FALSE}
-
-
-pf_stats <-read_tsv(file.path(params$directory, "Bam_stats_pf_Final.tsv"), show_col_types = FALSE)
-hs_stats <-read_tsv(file.path(params$directory, "Bam_stats_hs_Final.tsv"), show_col_types = FALSE)
 
 colnames(pf_stats) <- gsub(",","",colnames(pf_stats))
 colnames(hs_stats) <- gsub(",","", colnames(hs_stats))
