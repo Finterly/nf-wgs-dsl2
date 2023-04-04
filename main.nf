@@ -78,7 +78,7 @@ process multiqc {
     path(fastqc_results)
     
     output:
-    file('multiqc_report.html')  
+    path('multiqc_report.html')  
     
     conda 'bioconda::multiqc'
 
@@ -460,7 +460,7 @@ process pf_read_depth {
 	path refdir
 
 	output:
-	file("${pair_id}_read_coverage.tsv")
+	path("${pair_id}_read_coverage.tsv")
 
 	afterScript "rm -rf TMP"
 
@@ -498,7 +498,7 @@ process pf_read_depth_summary {
 	path(read_coverage)
 
 	output:
-	file("ReadCoverage_final.tsv")
+	path("ReadCoverage_final.tsv")
 
 	script: 
 	"""
@@ -518,7 +518,7 @@ process run_report_and_calculate_ratio {
 	path rscript
 
 	output:
-	tuple file('Ratios_hs_pf_reads.tsv'), file('run_quality_report.html')
+	tuple path('Ratios_hs_pf_reads.tsv'), path('run_quality_report.html')
 
 	afterScript "rm -rf TMP"
 
