@@ -325,7 +325,7 @@ process insert_summary {
 // Total bam statistics by sample
 process total_bam_stat_per_sample {
 	
-	tag "Total bam stat ${pair_id}"
+	tag "total bam stat ${pair_id}"
 
 	publishDir "${params.outdir}/$pair_id/stat_dir"
 	
@@ -348,7 +348,7 @@ process total_bam_stat_per_sample {
 // Total bam statistic summary
 process total_stat_summary {
 	
-	tag "Total stat summary"
+	tag "total stat summary"
 
 	publishDir params.outdir, mode:'copy'
 
@@ -509,7 +509,7 @@ process pf_read_depth_summary {
 // Rmd run quality report generation
 process run_report_and_calculate_ratio {
  
-	tag "Run quality report and calculate Pf:Hs ratio"
+	tag "run quality report and calculate Pf:Hs ratio"
 
 	publishDir params.outdir, mode:'copy'
 
