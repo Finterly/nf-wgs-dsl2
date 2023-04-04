@@ -1,14 +1,14 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// Part I of WGS processing for variant calling
+// QC PLASMODIUM FALCIPARUM WGS processing
 
 params.refdir = "$projectDir/genomes"
 params.rscript = "$projectDir/run_quality_report.Rmd"
 
 
 log.info """\
-    GATK4 OPTIMIZED PART I WGS - N F   P I P E L I N E
+    QC PLASMODIUM FALCIPARUM WGS - N F   P I P E L I N E
     ===================================
     refdir		  	: ${params.refdir}
 	rscript		  	: ${params.rscript}
@@ -356,7 +356,7 @@ process total_stat_summary {
 	path(bamstat_total) 
 
 	output:
-	path('Bam_stats_Total_Final.tsv') 
+	path('Bam_stats_total_Final.tsv') 
 
 	script:
 	"""
