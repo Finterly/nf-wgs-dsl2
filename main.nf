@@ -299,7 +299,8 @@ process insert_sizes {
 	-H ${pair_id}_histo.pdf \
 	-M 0.05
 
-	awk 'FNR>=8 && FNR<=8 {print \$1,\$3,\$4,\$5,\$6,\$7,\$8,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20,\$NF="${pair_id}"}' ${pair_id}.insert.txt > ${pair_id}.insert2.txt
+	# Note: MODE_INSERT_SIZE (2) and PAIR_ORIENTATION (9) are excluded 
+	awk 'BEGIN{OFS="\t"} FNR>=8 && FNR<=8 {print \$1,\$3,\$4,\$5,\$6,\$7,\$8,\$10,\$11,\$12,\$13,\$14,\$15,\$16,\$17,\$18,\$19,\$20,\$NF="${pair_id}"}' ${pair_id}.insert.txt > ${pair_id}.insert2.txt
 	"""
 }
 
@@ -318,7 +319,7 @@ process insert_summary {
 
 	script:
 	"""
-	cat $insert2_collection > InsertSize_Final.tsv
+	cat $insert2_collection | sed '1iMEDIAN_INSERT_SIZE	MEDIAN_ABSOLUTE_DEVIATION	MIN_INSERT_SIZE	MAX_INSERT_SIZE MEAN_INSERT_SIZE	STANDARD_DEVIATION	READ_PAIRS	WIDTH_OF_10_PERCENT	WIDTH_OF_20_PERCENT	WIDTH_OF_30_PERCENT	WIDTH_OF_40_PERCENT	WIDTH_OF_50_PERCENT	WIDTH_OF_60_PERCENT	WIDTH_OF_70_PERCENT	WIDTH_OF_80_PERCENT	WIDTH_OF_90_PERCENT	WIDTH_OF_95_PERCENT	WIDTH_OF_99_PERCENT	SAMPLE	LIBRARY	READ_GROUP	SAMPLE_ID' > InsertSize_Final.tsv
 	"""
 }
 
