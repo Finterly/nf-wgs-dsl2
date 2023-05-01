@@ -1,13 +1,11 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// nextflow run Making_gVCFs.nf -profile docker --inputdir /Users/fihu/Documents/GitHub/s3timulate/nf-wgs-dsl2_gVCFs/data/\*
+// nextflow run gvcsf_workflow.nf -profile docker --inputdir /Users/fihu/Documents/GitHub/s3timulate/nf-wgs-dsl2_gVCFs/data/\*
 
+// VARIANT CAlLING PLASMODIUM FALCIPARUM WGS PROCESSING
 
-
-// VARIANT CAlLING PLASMODIUM FALCIPARUM WGS processing
-
-params.refdir = "$projectDir/genomes"
+params.refdir = "$projectDir/../refs/genomes"
 
 log.info """\
     VARIANT CAlLING PLASMODIUM FALCIPARUM WGS - N F   P I P E L I N E

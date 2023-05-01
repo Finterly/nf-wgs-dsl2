@@ -18,7 +18,7 @@ hostname
 INPUT=/wynton/scratch/finterly_run_results_newer/results_controls
 OUTPUT=/wynton/scratch/finterly_vcf/vcfs_results_controls
 
-NXF_VER=22.11.0-edge nextflow run Making_gVCFs.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT 
+NXF_VER=22.11.0-edge nextflow run gvcf_workflow.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT 
 
 exit 0
 
