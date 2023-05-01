@@ -3,8 +3,8 @@ nextflow.enable.dsl=2
 
 // QC PLASMODIUM FALCIPARUM WGS processing
 
-params.refdir = "$projectDir/genomes"
-params.rscript = "$projectDir/run_quality_report.Rmd"
+params.refdir = "$projectDir/../refs/genomes"
+params.rscript = "$projectDir/../refs/run_quality_report.Rmd"
 
 
 log.info """\
