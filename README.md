@@ -38,13 +38,13 @@ And then include the `singularity` profile on the command line.
 *Note: you should also include executor you wish to run*
 
 ```bash
-NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer
+NXF_VER=22.11.0-edge nextflow run QC_Pf_WGS.nf -profile sge,apptainer
 ```
 
 Below is an example using the genome parameter:
 
 ```bash
-nextflow run main.nf --readDIR ~/Documents/MAD4HATTER_example_data/single -w ~/Documents/work --target v4 -profile sge,singularity --genome PlasmoDB-59_Pfalciparum3D7_Genome.fasta -c conf/custom.config
+nextflow run QC_Pf_WGS.nf --readDIR ~/Documents/MAD4HATTER_example_data/single -w ~/Documents/work --target v4 -profile sge,singularity --genome PlasmoDB-59_Pfalciparum3D7_Genome.fasta -c conf/custom.config
 ```
 
 ### Docker
@@ -62,7 +62,7 @@ docker build -t finterly/nf-wgs-dsl2 .
 And you're done! To run the pipeline, simply add `-profile docker`. 
 
 ```bash
-nextflow run main.nf -profile docker
+nextflow run QC_Pf_WGS.nf -profile docker
 ```
 
 ### Conda
@@ -72,7 +72,7 @@ Under construction :construction: !
 To use conda, you must first install either [conda](https://docs.conda.io/en/latest/) or [miniconda](https://docs.conda.io/en/latest/miniconda.html). Once installed, include the `conda` profile on the command line.
 
 ```bash
-nextflow run main.nf --readDIR single --target v3 -profile conda
+nextflow run QC_Pf_WGS.nf --readDIR single --target v3 -profile conda
 ```
 
 ### Customizing for your institution
@@ -85,13 +85,13 @@ Potential ways to execute the pipeline:
 
 ```bash
 # local executor
-nextflow run main.nf
+nextflow run QC_Pf_WGS.nf
 
 # with sge + singularity and Nextera trimadapter
-NXF_VER=22.11.0-edge nextflow run main.nf -profile sge,apptainer --trimadapter ./adapters/NexteraPE-custom.fa
+NXF_VER=22.11.0-edge nextflow run QC_Pf_WGS.nf -profile sge,apptainer --trimadapter ./adapters/NexteraPE-custom.fa
 
 # with a profile (currently only supports sge)
-nextflow run main.nf -profile sge
+nextflow run QC_Pf_WGS.nf -profile sge
 
 ```
 
