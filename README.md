@@ -41,7 +41,7 @@ About the nextflow.config file:
 
 Additionally, the nextflow parameter `-profile` can be use to target the infrastructure you wish to run the pipeline on. The different profiles are listed below, including any setup that is required.
 
-## Running the QC_workflow
+## Running the QC Workflow
 
 There are several options for running the QC_workflow. 
 
@@ -66,7 +66,7 @@ NXF_VER=22.11.0-edge nextflow run qc_workflow.nf -profile sge,apptainer --inputd
 
 ```
 
-### 1B. Apptainer + job script
+### 1B. Apptainer + Job script
 Submit `run_qc_workflow.sh` script as Wynton job. This option is essentially the same as Option 1,  but packaged into a script. 
 
 The `run_qc_workflow.sh` script contains a bash command for running the nextflow workflow using Apptainer. 
@@ -125,7 +125,7 @@ About the nextflow.config file:
 
 Additionally, the nextflow parameter `-profile` can be use to target the infrastructure you wish to run the pipeline on. The different profiles are listed below, including any setup that is required.
 
-## Running the gVCF_workflow
+## Running the gVCF Workflow
 
 ### 2A. Apptainer 
 Run  `gvcf_workflow.nf` on Wynton using Apptainer(singularity container). If the apptainer image is not already available, please run the command below to generate the apptainer image. Use `sudo` if necessary.
@@ -146,7 +146,7 @@ NXF_VER=22.11.0-edge nextflow run gvcf_workflow.nf -profile sge,apptainer --inpu
 
 ```
 
-### 2B. Apptainer + job script
+### 2B. Apptainer + Job script
 Submit `run_gvcf_workflow.sh` script as Wynton job. This option is essentially the same as Option 1,  but packaged into a script. 
 
 The `run_gvcf_workflow.sh` script contains a bash command for running the nextflow workflow using Apptainer. 
