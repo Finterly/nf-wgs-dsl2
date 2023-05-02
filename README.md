@@ -1,12 +1,12 @@
-# Plasmodium Falciparum WGS Pipeline: Nextflow DSL 2
+# Plasmodium Falciparum WGS Pipeline (Nextflow DSL 2)
 
 Adapted from: 
 - https://github.com/Karaniare/Optimized_GATK4_pipeline (shell script)
 - https://github.com/jhoneycuttr/nf-wgs (Nextflow DSL 1)
 
 ## Directory Organization
-- `*data*`: suggested folder for raw fastq.gz files
-- `*results*`: suggested folder output
+- `data`: suggested folder for raw fastq.gz files
+- `results`: suggested folder output
 - `workflows` 
   - `config`
     - `Apptainer`: the file used to build nf-wgs-dsl2.sif  
@@ -25,7 +25,7 @@ Adapted from:
     - `genomes`: reference genome files and more
     - `run_quality_report.Rmd`: r script for quality report used in `QC_workflow`
 
-# QC_workflow 
+# 1. QC Workflow 
 
 About the nextflow.config file:
 
@@ -45,7 +45,7 @@ Additionally, the nextflow parameter `-profile` can be use to target the infrast
 
 There are several options for running the QC_workflow. 
 
-### 1. Run  `qc_workflow.nf` on Wynton using Apptainer(singularity container) 
+### 1A. Run  `qc_workflow.nf` on Wynton using Apptainer(singularity container) 
 If the apptainer image is not already available, please run the command below to generate the apptainer image. Use `sudo` if necessary.
 ```bash
 apptainer build nf-wgs-dsl2.sif Apptainer
@@ -64,7 +64,7 @@ NXF_VER=22.11.0-edge nextflow run qc_workflow.nf -profile sge,apptainer --inputd
 
 ```
 
-### 2. Submit `run_qc_workflow.sh` script as Wynton job 
+### 1B. Submit `run_qc_workflow.sh` script as Wynton job 
 
 This option is essentially the same as Option 1,  but packaged into a script. 
 
@@ -89,7 +89,7 @@ qsub -cwd run_qc_workflow.sh
 You can monitor job progress using `qstat` or viewing the log `cat run_qc_workflow.sh.o#######`. 
 
 
-### 3. Run  `qc_workflow.nf` on local computer using Docker image 
+### 1C. Run  `qc_workflow.nf` on local computer using Docker image 
 
 The pipeline can be easily run with docker and is the recommended way to run it when not using an HPC.
 
@@ -108,11 +108,9 @@ NXF_VER=22.11.0-edge nextflow run qc_workflow.nf -profile docker
 ```
 
 
-# gVCF_workflow 
+# 2. gVCF Workflow 
 
 Notes: We expect to run `gVCF_workflow` following `QC_workflow`, therefore the default input directory for `gVCF_workflow`is the default output directory for `QC_workflow`. 
-
-### Setting Parameters
 
 About the nextflow.config file:
 
@@ -129,7 +127,7 @@ Additionally, the nextflow parameter `-profile` can be use to target the infrast
 
 ## Running the gVCF_workflow
 
-### 1. Run  `gvcf_workflow.nf` on Wynton using Apptainer(singularity container) 
+### 2A. Run  `gvcf_workflow.nf` on Wynton using Apptainer(singularity container) 
 If the apptainer image is not already available, please run the command below to generate the apptainer image. Use `sudo` if necessary.
 ```bash
 apptainer build nf-wgs-dsl2.sif Apptainer
@@ -148,7 +146,7 @@ NXF_VER=22.11.0-edge nextflow run gvcf_workflow.nf -profile sge,apptainer --inpu
 
 ```
 
-### 2. Submit `run_gvcf_workflow.sh` script as Wynton job 
+### 2B. Submit `run_gvcf_workflow.sh` script as Wynton job 
 
 This option is essentially the same as Option 1,  but packaged into a script. 
 
@@ -173,7 +171,7 @@ You can monitor job progress using `qstat` or viewing the log `cat run_gvcf_work
 
 
 
-### 3. Run  `gvcf_workflow.nf` on local computer using Docker image 
+### 3C. Run  `gvcf_workflow.nf` on local computer using Docker image 
 
 The pipeline can be easily run with docker and is the recommended way to run it when not using an HPC.
 
