@@ -6,7 +6,7 @@ Adapted from:
 
 ## Directory Organization
 - `data`: suggested folder for raw fastq.gz files
-- `results`: suggested folder output
+- `results`: suggested folder for output
 - `workflows` 
   - `config`
     - `Apptainer`: the file used to build nf-wgs-dsl2.sif  
