@@ -45,7 +45,9 @@ Additionally, the nextflow parameter `-profile` can be use to target the infrast
 
 There are several options for running the QC_workflow. 
 
-### 1A. Run  `qc_workflow.nf` on Wynton using Apptainer(singularity container) 
+### 1A. Apptainer
+Run  `qc_workflow.nf` on Wynton using Apptainer(singularity container). 
+
 If the apptainer image is not already available, please run the command below to generate the apptainer image. Use `sudo` if necessary.
 ```bash
 apptainer build nf-wgs-dsl2.sif Apptainer
@@ -64,9 +66,8 @@ NXF_VER=22.11.0-edge nextflow run qc_workflow.nf -profile sge,apptainer --inputd
 
 ```
 
-### 1B. Submit `run_qc_workflow.sh` script as Wynton job 
-
-This option is essentially the same as Option 1,  but packaged into a script. 
+### 1B. Apptainer + job script
+Submit `run_qc_workflow.sh` script as Wynton job. This option is essentially the same as Option 1,  but packaged into a script. 
 
 The `run_qc_workflow.sh` script contains a bash command for running the nextflow workflow using Apptainer. 
 You must specify the **full path** to the desired input directory, output directory, and trimmomatic adapter (optional)
@@ -89,9 +90,8 @@ qsub -cwd run_qc_workflow.sh
 You can monitor job progress using `qstat` or viewing the log `cat run_qc_workflow.sh.o#######`. 
 
 
-### 1C. Run  `qc_workflow.nf` on local computer using Docker image 
-
-The pipeline can be easily run with docker and is the recommended way to run it when not using an HPC.
+### 1C. Docker
+Run  `qc_workflow.nf` on local computer using Docker image. The pipeline can be easily run with docker and is the recommended way to run it when not using an HPC.
 
 Follow the steps below to setup your docker image:
 
@@ -127,8 +127,8 @@ Additionally, the nextflow parameter `-profile` can be use to target the infrast
 
 ## Running the gVCF_workflow
 
-### 2A. Run  `gvcf_workflow.nf` on Wynton using Apptainer(singularity container) 
-If the apptainer image is not already available, please run the command below to generate the apptainer image. Use `sudo` if necessary.
+### 2A. Apptainer 
+Run  `gvcf_workflow.nf` on Wynton using Apptainer(singularity container). If the apptainer image is not already available, please run the command below to generate the apptainer image. Use `sudo` if necessary.
 ```bash
 apptainer build nf-wgs-dsl2.sif Apptainer
 ```
@@ -146,9 +146,8 @@ NXF_VER=22.11.0-edge nextflow run gvcf_workflow.nf -profile sge,apptainer --inpu
 
 ```
 
-### 2B. Submit `run_gvcf_workflow.sh` script as Wynton job 
-
-This option is essentially the same as Option 1,  but packaged into a script. 
+### 2B. Apptainer + job script
+Submit `run_gvcf_workflow.sh` script as Wynton job. This option is essentially the same as Option 1,  but packaged into a script. 
 
 The `run_gvcf_workflow.sh` script contains a bash command for running the nextflow workflow using Apptainer. 
 You must specify the **full path** to the desired input directory, output directory, and trimmomatic adapter (optional)
@@ -171,9 +170,8 @@ You can monitor job progress using `qstat` or viewing the log `cat run_gvcf_work
 
 
 
-### 3C. Run  `gvcf_workflow.nf` on local computer using Docker image 
-
-The pipeline can be easily run with docker and is the recommended way to run it when not using an HPC.
+### 3C. Docker 
+Run  `gvcf_workflow.nf` on local computer using Docker image. The pipeline can be easily run with docker and is the recommended way to run it when not using an HPC.
 
 Follow the steps below to setup your docker image:
 
