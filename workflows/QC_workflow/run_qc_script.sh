@@ -16,7 +16,7 @@ hostname
                                          # e.g. "did my job exceed its memory request?
 
 INPUT=/wynton/scratch/finterly_WGS_pipeline/data
-OUTPUT=/wynton/scratch/finterly_WGS_pipeline/results
+OUTPUT=/wynton/scratch/finterly_WGS_pipeline/results/qc_results
 TRIM=/wynton/scratch/finterly_WGS_pipeline/workflows/refs/adapters/NexteraPE-custom.fa
 
 NXF_VER=22.11.0-edge nextflow run qc_workflow.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT --trimadapter $TRIM 
