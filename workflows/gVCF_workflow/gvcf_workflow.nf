@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// VARIANT CAlLING PLASMODIUM FALCIPARUM WGS PROCESSING
+// VARIANT CAlLING PLASMODIUM FALCIPARUM WGS PIPELINE
 
 params.refdir = "$projectDir/../refs/genomes"
 

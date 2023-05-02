@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// QC PLASMODIUM FALCIPARUM WGS processing
+// QC PLASMODIUM FALCIPARUM WGS PIPELINE
 
 params.refdir = "$projectDir/../refs/genomes"
 params.rscript = "$projectDir/../refs/run_quality_report.Rmd"
