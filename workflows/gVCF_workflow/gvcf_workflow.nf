@@ -1,8 +1,6 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// nextflow run gvcsf_workflow.nf -profile docker --inputdir /Users/fihu/Documents/GitHub/s3timulate/nf-wgs-dsl2_gVCFs/data/\*
-
 // VARIANT CAlLING PLASMODIUM FALCIPARUM WGS PROCESSING
 
 params.refdir = "$projectDir/../refs/genomes"

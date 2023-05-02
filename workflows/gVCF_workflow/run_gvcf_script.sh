@@ -17,6 +17,7 @@ hostname
 
 INPUT=/wynton/scratch/finterly_WGS_pipeline/results
 OUTPUT=/wynton/scratch/finterly_WGS_pipeline/results_vcf
+
 NXF_VER=22.11.0-edge nextflow run gvcf_workflow.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT 
 
 exit 0
