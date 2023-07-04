@@ -68,7 +68,7 @@ process genotype {
 	#for i in $chrom
 	#  do
 	#   cd $ref_dir
-	#   for j in $(cat $region)
+	#   for j in cat $region
 	#     do
 	#     cd $vcf_dir
 	#     echo -e "#\!/bin/bash" > genotype_chr"$i"_"$j".sh
