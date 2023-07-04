@@ -14,8 +14,7 @@ log.info """\
     .stripIndent()
 
 
-// Combining gVCFs into a genomic database 
-// Combining gvcfs
+// Combining gVCFs into a genomic database
 process combine_gvcfs {
 	
 	tag "combine gvcfs ${chrom}"
@@ -66,27 +65,27 @@ process genotype {
     script:
     """   	
 	##### 
-	for i in $chrom
-	  do
-	   cd $ref_dir
-	   for j in $(cat $region)
-	     do
-	     cd $vcf_dir
-	     echo -e "#\!/bin/bash" > genotype_chr"$i"_"$j".sh
-	     echo -e "#SBATCH -J Genotype_chr"$i"_"$j"" >> genotype_chr"$i"_"$j".sh
-	     echo -e "#SBATCH -t 120:00:00" >> genotype_chr"$i"_"$j".sh
-	     echo -e "#SBATCH -c 8" >> genotype_chr"$i"_"$j".sh
-	     echo -e "#SBATCH --mem-per-cpu=10g" >> genotype_chr"$i"_"$j".sh
-	     echo -e "module load gatk/4.2.2.0 samtools/ bcftools/1.9 bcftools/1.9" >> genotype_chr"$i"_"$j".sh
-	     echo -e "ulimit -c unlimited" >> genotype_chr"$i"_"$j".sh
-	     echo -e "module load java/jdk-17.0.2" >> genotype_chr"$i"_"$j".sh
-	     echo -e "gatk --java-options "-Xmx80g -Xms80g"  GenotypeGVCFs --genomicsdb-use-bcf-codec true  -R $ref_dir/Pf3D7.fasta -V gendb://$vcf_dir/chr"$i"_database --max-genotype-count 1024 -O $vcf_dir/chr"$i"_part"$j".vcf.gz --tmp-dir $ref_dir -stand-call-conf 30 -L "$j"" >> genotype_chr"$i"_"$j".sh
-	     chmod +x genotype_chr"$i"_"$j".sh
-	     sed -i 's/-Xmx80g -Xms80g/"-Xmx80g -Xms80g"/g' genotype_chr"$i"_"$j".sh
-	     sbatch genotype_chr"$i"_"$j".sh
-	   done
-	done
-	}
+	#for i in $chrom
+	#  do
+	#   cd $ref_dir
+	#   for j in $(cat $region)
+	#     do
+	#     cd $vcf_dir
+	#     echo -e "#\!/bin/bash" > genotype_chr"$i"_"$j".sh
+	# ##    echo -e "#SBATCH -J Genotype_chr"$i"_"$j"" >> genotype_chr"$i"_"$j".sh
+	#  #   echo -e "#SBATCH -t 120:00:00" >> genotype_chr"$i"_"$j".sh
+	#   ##  echo -e "#SBATCH -c 8" >> genotype_chr"$i"_"$j".sh
+	#   #  echo -e "#SBATCH --mem-per-cpu=10g" >> genotype_chr"$i"_"$j".sh
+	#     echo -e "module load gatk/4.2.2.0 samtools/ bcftools/1.9 bcftools/1.9" >> genotype_chr"$i"_"$j".sh
+	#     echo -e "ulimit -c unlimited" >> genotype_chr"$i"_"$j".sh
+	#    echo -e "module load java/jdk-17.0.2" >> genotype_chr"$i"_"$j".sh
+	#     echo -e "gatk --java-options "-Xmx80g -Xms80g"  GenotypeGVCFs --genomicsdb-use-bcf-codec true  -R $ref_dir/Pf3D7.fasta -V gendb://$vcf_dir/chr"$i"_database --max-genotype-count 1024 -O $vcf_dir/chr"$i"_part"$j".vcf.gz --tmp-dir $ref_dir -stand-call-conf 30 -L "$j"" >> genotype_chr"$i"_"$j".sh
+	#     chmod +x genotype_chr"$i"_"$j".sh
+	#     sed -i 's/-Xmx80g -Xms80g/"-Xmx80g -Xms80g"/g' genotype_chr"$i"_"$j".sh
+	#     sbatch genotype_chr"$i"_"$j".sh
+	#   done
+	#done
+	#}
     """   
 }
 
@@ -104,6 +103,7 @@ workflow {
         .fromPath(params.input, checkIfExists: true)
 		.map {tuple( it.name.split('.')[1].split('.g.vcf*')[0], it )}
 		.set{input_ch}
+		.view()
 		//.ifEmpty{error "Cannot find any reads matching: ${params.reads}"}
 
 	// variant calling
