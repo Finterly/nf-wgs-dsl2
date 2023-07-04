@@ -87,8 +87,6 @@ process genotype {
 	   done
 	done
 	}
-
-
     """   
 }
 
