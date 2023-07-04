@@ -15,10 +15,10 @@ hostname
 [[ -n "$JOB_ID" ]] && qstat -j "$JOB_ID"  # This is useful for debugging and usage purposes,
                                          # e.g. "did my job exceed its memory request?
 
-INPUT=/wynton/scratch/finterly_WGS_pipeline/results/qc_results
-OUTPUT=/wynton/scratch/finterly_WGS_pipeline/results/gvcf_results
+INPUT=/wynton/scratch/finterly_WGS_pipeline/results/gvcf_results/victoria_06162023_gvcf_results
+OUTPUT=/wynton/scratch/finterly_WGS_pipeline/results/vcf_results/test_test
 
-NXF_VER=22.11.0-edge nextflow run gvcf_workflow.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT 
+NXF_VER=22.11.0-edge nextflow run vcf_workflow.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT 
 
 exit 0
 
