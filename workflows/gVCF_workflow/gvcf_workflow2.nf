@@ -67,9 +67,10 @@ workflow {
 	*/
 
 	Channel
-	    .fromPath(params.input, checkIfExists: true)
-	    .filter{it.name.endsWith('.bam')}
-	    .set{input_ch}
+        .fromPath(params.input, checkIfExists: true)
+		.map {tuple( it.name.split('.sorted')[0], it )}
+		.set{input_ch}
+		//.ifEmpty{error "Cannot find any reads matching: ${params.reads}"}
 		
     // Loop over for chromosomes 1 through 14 (default) 
     chroms = set(params.chrom_range.split(','))
