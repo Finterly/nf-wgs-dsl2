@@ -34,8 +34,6 @@ process g_variant_calling {
 
     script:
     """    
-	samtools index -bc ${pf_bam}
-
 	gatk --java-options "-Xmx${params.gatk_memory}g" HaplotypeCaller -R $refdir/Pf3D7.fasta -I ${pf_bam} -ERC GVCF -ploidy 2 \
 	--native-pair-hmm-threads 16 \
 	-O  ${pair_id}.chr${chrom}.g.vcf \
@@ -67,11 +65,17 @@ workflow {
 	*/
 
 	Channel
-        .fromPath(params.input, checkIfExists: true)
-		.map {tuple( it.name.split('.sorted')[0], it )}
-		.set{input_ch}
+		.fromPath(params.input, checkIfExists: true)
+        .filter{it.name.endsWith('.bam')}
+        .map{
+            def indexFile = file("${it.getPath()}.csi")
+            tuple(it.name.split('.sorted')[0], it, indexFile)
+        }
+        .set{input_ch}
 		//.ifEmpty{error "Cannot find any reads matching: ${params.reads}"}
-		
+
+	input_ch.view()
+	/*
     // Loop over for chromosomes 1 through 14 (default) 
     chroms = set(params.chrom_range.split(','))
 
@@ -79,5 +83,5 @@ workflow {
     for (chrom in chroms) {
         g_variant_calling(input_ch, params.refdir, chrom)
     } 
-
+	*/
 }
