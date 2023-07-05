@@ -22,4 +22,4 @@ NXF_VER=22.11.0-edge nextflow run vcf_workflow.nf -profile sge,apptainer --input
 
 exit 0
 
-# NXF_VER=22.11.0-edge nextflow run Making_gVCFs.nf -profile sge,apptainer --inputdir /wynton/scratch/finterly_run_results_newer/results_controls --outdir /wynton/scratch/finterly_vcf/vcfs_results_controls 
+# NXF_VER=22.11.0-edge nextflow run vcf_workflow.nf -profile sge,apptainer --inputdir /wynton/scratch/finterly_WGS_pipeline/results/gvcf_results/victoria_06162023_gvcf_results --outdir /wynton/scratch/finterly_WGS_pipeline/results/vcf_results/test_test 

@@ -103,7 +103,8 @@ workflow {
         .fromPath(params.input, checkIfExists: true)
 		.map {tuple( it.name.split('.')[1].split('.g.vcf*')[0], it )}
 		.set{input_ch}
-		.view()
+
+	input_ch.view()
 		//.ifEmpty{error "Cannot find any reads matching: ${params.reads}"}
 
 	// variant calling
