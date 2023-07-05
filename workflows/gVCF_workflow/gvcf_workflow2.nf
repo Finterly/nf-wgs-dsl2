@@ -69,8 +69,8 @@ workflow {
 	    .filter{it.name.endsWith('.bam')}
 	    .map{
 	        def basename = it.name.replaceAll('.bam$', '')
-	        def indexFile = new File(it.parent, "${basename}.csi")
-	        tuple(basename, it, indexFile)
+	        def indexFile = new File(it.parent, it.name + ".csi")
+	        tuple(it.name.split('.sorted')[0], it, indexFile)
 	    }
 	    .set{input_ch}
 		
