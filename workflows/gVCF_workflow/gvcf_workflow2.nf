@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 // GENOMIC VARIANT CAlLING PLASMODIUM FALCIPARUM WGS PIPELINE
 
 params.refdir = "$projectDir/../refs/genomes"
-params.chrom_range = '1..14'
+params.chrom_range = '1..3'
 
 log.info """\
     GENOMIC VARIANT CAlLING PLASMODIUM FALCIPARUM WGS - N F   P I P E L I N E
@@ -23,7 +23,7 @@ process g_variant_calling {
 	publishDir "${params.outdir}/$chrom"
        
     input:
-	tuple val(pair_id), path(pf_bam), path(pf_bam_index)
+	tuple val(pair_id), path(pf_bam)
     path refdir
 	val chrom
 	
@@ -34,6 +34,8 @@ process g_variant_calling {
 
     script:
     """    
+	samtools index -bc ${pf_bam}
+
 	gatk --java-options "-Xmx${params.gatk_memory}g" HaplotypeCaller -R $refdir/Pf3D7.fasta -I ${pf_bam} -ERC GVCF -ploidy 2 \
 	--native-pair-hmm-threads 16 \
 	-O  ${pair_id}.chr${chrom}.g.vcf \
@@ -67,11 +69,6 @@ workflow {
 	Channel
 	    .fromPath(params.input, checkIfExists: true)
 	    .filter{it.name.endsWith('.bam')}
-	    .map{
-	        def basename = it.name.replaceAll('.bam$', '')
-	        def indexFile = new File(it.parent, it.name + ".csi")
-	        tuple(it.name.split('.sorted')[0], it, indexFile)
-	    }
 	    .set{input_ch}
 		
     // Loop over for chromosomes 1 through 14 (default) 
