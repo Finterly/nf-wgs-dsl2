@@ -20,14 +20,30 @@ process g_variant_calling {
 	
 	tag "g variant calling ${pair_id}"
 
-	publishDir "${params.outdir}/$chrom"
+	publishDir "${params.outdir}/$pair_id"
        
     input:
 	tuple val(pair_id), path(pf_bam), path(pf_bam_index)
     path refdir
-	val chrom
+	//val chrom
 	
+	output:
+    tuple val(pair_id), path("${pair_id}.chr{1,2,3,4,5,6,7,8,9,10,11,12,13,14}.g.vcf"), 
+    path("${pair_id}.chr{1,2,3,4,5,6,7,8,9,10,11,12,13,14}.g.vcf.idx")  
 
+    script:
+    """    
+	samtools index -bc ${pf_bam}
+
+	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14
+	    do
+	        gatk --java-options "-Xmx${params.gatk_memory}g" HaplotypeCaller -R $refdir/Pf3D7.fasta -I ${pf_bam} -ERC GVCF -ploidy 2 \
+	        --native-pair-hmm-threads 16 -O  ${pair_id}.chr"\$i".g.vcf --assembly-region-padding 100 \
+	        --max-num-haplotypes-in-population 128 --kmer-size 10 --kmer-size 25 \
+	        --min-dangling-branch-length 4 --heterozygosity 0.0029 --indel-heterozygosity 0.0017 --min-assembly-region-size 100 -L $refdir/core_chr"\$i".list -mbq 5 -DF MappingQualityReadFilter --base-quality-score-threshold 12
+	    done
+    """	
+/*
     output:
     tuple val(pair_id), path("${pair_id}.chr${chrom}.g.vcf"), 
     path("${pair_id}.chr${chrom}.g.vcf.idx")  
@@ -50,13 +66,14 @@ process g_variant_calling {
 	-DF MappingQualityReadFilter \
 	--base-quality-score-threshold 12
     """	
+*/
+
 }
 
 
 workflow.onComplete { 
 	println ( workflow.success ? "\nDone!": "Oops .. something went wrong" )
 }
-
 
 workflow {
 	/*
@@ -75,6 +92,10 @@ workflow {
 
 	input_ch.view()
 	
+	// variant calling
+	var_ch = g_variant_calling(input_ch, params.refdir) 
+	
+	/*
     // Loop over for chromosomes 1 through 14 (default) 
     chroms = set(params.chrom_range.split(','))
 
@@ -82,4 +103,5 @@ workflow {
     for (chrom in chroms) {
         g_variant_calling(input_ch, params.refdir, chrom)
     } 
+	*/
 }
