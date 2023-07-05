@@ -74,12 +74,10 @@ workflow {
 	    }
 	    .set{input_ch}
 		
-	// variant calling
-	var_ch = g_variant_calling(input_ch, params.refdir) 
-
     // Loop over for chromosomes 1 through 14 (default) 
     chroms = set(params.chrom_range.split(','))
 
+	// variant calling
     for (chrom in chroms) {
         g_variant_calling(input_ch, params.refdir, chrom)
     } 
