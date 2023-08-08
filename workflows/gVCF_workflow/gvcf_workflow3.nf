@@ -17,9 +17,9 @@ log.info """\
 // Running HaplotypeCaller to generate gVCFs
 process g_variant_calling {
 	
-	tag "g variant calling ${pair_id} chrom ${chrom}"
+	tag "g variant calling ${pair_id} chr${chrom}"
 
-    publishDir "${params.outdir}/${chrom}", mode:'copy'
+    publishDir "${params.outdir}/chr${chrom}", mode:'copy'
        
     input:
 	tuple val(pair_id), path(pf_bam_and_idx), val(chrom)

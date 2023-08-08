@@ -22,7 +22,7 @@ process combine_gvcfs {
 	publishDir "${params.outdir}"
        
     input:
-	tuple val(chrom), path(gvcfs)
+	tuple val(pair_id), path(g_vcf_and_idx)
 
     output:
     tuple val(chrom)
@@ -35,19 +35,23 @@ process combine_gvcfs {
 	#cd $vcf_dir
 	#for i in $chrom
 	#  do
-	#    gatk --java-options "-Xmx${params.gatk_memory}g" GenomicsDBImport \
-	#    --sample-name-map gvcf_chr"$i"_list.tsv \
-	#    --genomicsdb-workspace-path chr"$i"_database \
-	#    --intervals $ref_dir/core_chr"$i".list --batch-size 100 \
-	#    --reader-threads 24 --genomicsdb-segment-size 8048576 \
-	#    --genomicsdb-vcf-buffer-size 160384
+	
+	gatk --java-options "-Xmx${params.gatk_memory}g" GenomicsDBImport \
+	--sample-name-map gvcf_chr"$i"_list.tsv \
+	--genomicsdb-workspace-path chr"$i"_database \
+	--intervals $ref_dir/core_chr"$i".list \
+	--batch-size 100 \
+	--reader-threads 24 \
+	--genomicsdb-segment-size 8048576 \
+	--genomicsdb-vcf-buffer-size 160384
+	
 	#done
     """   
 }
 
 
-// Running joint genotyping by genomic segment 
-// (the core genome of each chromosome is split into smaller genomic regions) via multiple slurm jobs
+// Running joint genotyping by genomic segment (the core genome of each chromosome 
+// is split into smaller genomic regions) via multiple slurm jobs
 process genotype {
 	
 	tag "combine gvcfs ${pair_id}"
@@ -71,22 +75,39 @@ process genotype {
 	#   for j in cat $region
 	#     do
 	#     cd $vcf_dir
-	#     echo -e "#\!/bin/bash" > genotype_chr"$i"_"$j".sh
-	# ##    echo -e "#SBATCH -J Genotype_chr"$i"_"$j"" >> genotype_chr"$i"_"$j".sh
-	#  #   echo -e "#SBATCH -t 120:00:00" >> genotype_chr"$i"_"$j".sh
-	#   ##  echo -e "#SBATCH -c 8" >> genotype_chr"$i"_"$j".sh
-	#   #  echo -e "#SBATCH --mem-per-cpu=10g" >> genotype_chr"$i"_"$j".sh
-	#     echo -e "module load gatk/4.2.2.0 samtools/ bcftools/1.9 bcftools/1.9" >> genotype_chr"$i"_"$j".sh
-	#     echo -e "ulimit -c unlimited" >> genotype_chr"$i"_"$j".sh
-	#    echo -e "module load java/jdk-17.0.2" >> genotype_chr"$i"_"$j".sh
-	#     echo -e "gatk --java-options "-Xmx80g -Xms80g"  GenotypeGVCFs --genomicsdb-use-bcf-codec true  -R $ref_dir/Pf3D7.fasta -V gendb://$vcf_dir/chr"$i"_database --max-genotype-count 1024 -O $vcf_dir/chr"$i"_part"$j".vcf.gz --tmp-dir $ref_dir -stand-call-conf 30 -L "$j"" >> genotype_chr"$i"_"$j".sh
-	#     chmod +x genotype_chr"$i"_"$j".sh
+		text_data=$(cat <<EOT
+		#!/bin/bash
+		#SBATCH -J Genotype_chr"$i"_"$j"
+		#SBATCH -t 120:00:00
+		#SBATCH -c 8
+		#SBATCH --mem-per-cpu=10g
+		module load gatk/4.2.2.0 samtools/ bcftools/1.9 bcftools/1.9
+		ulimit -c unlimited
+		module load java/jdk-17.0.2
+		gatk --java-options "-Xmx80g -Xms80g"  GenotypeGVCFs \
+		--genomicsdb-use-bcf-codec true  \
+		-R $ref_dir/Pf3D7.fasta \
+		-V gendb://$vcf_dir/chr"$i"_database \
+		--max-genotype-count 1024 \
+		-O $vcf_dir/chr"$i"_part"$j".vcf.gz \
+		--tmp-dir $ref_dir -stand-call-conf 30 \
+		-L "$j"" >> genotype_chr"$i"_"$j".sh 
+		EOT
+		)
+		echo "$text_data" > genotype_chr"$i"_"$j".sh
+
+
+
+	#      chmod +x genotype_chr"$i"_"$j".sh
 	#     sed -i 's/-Xmx80g -Xms80g/"-Xmx80g -Xms80g"/g' genotype_chr"$i"_"$j".sh
 	#     sbatch genotype_chr"$i"_"$j".sh
 	#   done
 	#done
 	#}
     """   
+
+
+	
 }
 
 workflow.onComplete { 
@@ -95,13 +116,18 @@ workflow.onComplete {
 
 
 workflow {
-	/*
-	Create 'input_ch' channel that emits for each chrom a
-	tuple containing multiple elements: chrom
-	*/
+
+	// Create 'chrom_ch' channel which emits a number for pf chromosomes 1 through 14 (gvcf folders)
+	chrom_ch = Channel.from(1,2,3,4,5,6)
+	
+	// Create 'bam_ch' channel that emits for each sample a tuple containing 3 elements: pair_id, pf_bam, pf_bam_index
+	bam_ch = Channel.fromFilePairs(params.input, checkIfExists: true)
+
+
+
+	// Create 'input_ch' channel that emits for each sample a tuple containing 3 elements: pair_id, g_vcf, g_vcf_index
 	Channel
-        .fromPath(params.input, checkIfExists: true)
-		.map {tuple( it.name.split('.')[1].split('.g.vcf*')[0], it )}
+        .fromFilePairs(params.reads, checkIfExists: true)
 		.set{input_ch}
 
 	input_ch.view()
@@ -111,3 +137,4 @@ workflow {
 	combine_gvcfs(input_ch) 
 
 }
+
