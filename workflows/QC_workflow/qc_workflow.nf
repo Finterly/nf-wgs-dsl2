@@ -245,13 +245,15 @@ process target_pf {
 	path refdir
 
 	output:
-	tuple val(pair_id), path("${pair_id}.sorted.dup.pf.bam")
+	tuple val(pair_id), path("${pair_id}.sorted.dup.pf.bam"), path("${pair_id}.sorted.dup.pf.bam.csi")
 
 	script:
 	"""
 	samtools view -b -h ${sorted_dup_bam} \
 	-T $refdir/Pf3D7.fasta \
 	-L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
+
+	samtools index -bc ${pair_id}.sorted.dup.pf.bam
 	"""	
 }
 
@@ -286,7 +288,7 @@ process insert_sizes {
 	publishDir "${params.outdir}/$pair_id/stat_dir"
 
 	input:
-	tuple val(pair_id), path(pf_bam)
+	tuple val(pair_id), path(pf_bam), path(pf_bam_index)
 
 	output:
 	tuple val(pair_id), path("${pair_id}.insert.txt"), path("${pair_id}.insert2.txt"), path("${pair_id}_histo.pdf")
@@ -373,7 +375,7 @@ process pf_bam_stat_per_sample {
 	publishDir "${params.outdir}/$pair_id/stat_dir"
 	
 	input: 
-	tuple val(pair_id), path(pf_bam)
+	tuple val(pair_id), path(pf_bam), path(pf_bam_index)
 
 	output:
 	tuple val(pair_id), path("${pair_id}_bamstat_pf_final.tsv"), path("${pair_id}_bamstat_pf.tsv")
@@ -457,7 +459,7 @@ process pf_read_depth {
 	publishDir "${params.outdir}/$pair_id/stat_dir/by_chrom"
 
 	input:
-	tuple val(pair_id), path(pf_bam)
+	tuple val(pair_id), path(pf_bam), path(pf_bam_index)
 	path refdir
 
 	output:
@@ -468,8 +470,6 @@ process pf_read_depth {
 	script: 
 	"""
 	mkdir -p TMP
-
-	samtools index -bc ${pf_bam}
 
 	for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14
 	    do
