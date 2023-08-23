@@ -75,11 +75,7 @@ pf_stats %>%
   left_join(hs_stats %>% select(sample_id, reads_mapped_hs), by = "sample_id") %>%
   mutate(pf_ratio = reads_mapped_pf/reads_mapped_hs) %>%
   pivot_longer(cols = !c("sample_id","pf_ratio"), values_to = "reads_mapped", names_to = "species") %>%
-  mutate(species = case_when(str_detect(species, "hs") ~ "Human",
-                             str_detect(species, "pf") ~ "P.falciparum")) %>%
-  mutate(sample_id = str_split(sample_id, "_", n = 5)) %>%
-  mutate(sample_id = map(.x = sample_id, .f = ~ pluck(.x, 2))) %>%
-  mutate(sample_id = paste0(sample_id)) -> reads_long
+  mutate(species = case_when(str_detect(species, "hs") ~ "Human", str_detect(species, "pf") ~ "P.falciparum")) -> reads_long
   
 reads_long %>%
   ggplot(aes(x = sample_id, y = reads_mapped, fill = species)) +
