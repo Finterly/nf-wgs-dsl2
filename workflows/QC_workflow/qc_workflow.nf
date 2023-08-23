@@ -238,7 +238,7 @@ process target_pf {
     tag "target Pf ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outdir}/$pair_id"
+    publishDir "${params.outdir}/$pair_id", mode:'copy'
 
     input:
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
@@ -285,7 +285,7 @@ process insert_sizes {
     
     tag "insert sizes ${pair_id}"
 
-    publishDir "${params.outdir}/$pair_id/stat_dir"
+    publishDir "${params.outdir}/$pair_id/stat_dir", mode:'copy'
 
     input:
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
