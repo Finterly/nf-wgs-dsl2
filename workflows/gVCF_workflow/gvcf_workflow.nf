@@ -62,7 +62,7 @@ workflow {
     // Create 'bam_ch' channel that emits for each sample a tuple containing 3 elements: pair_id, pf_bam, pf_bam_index
     bam_ch = Channel.fromFilePairs(params.input, checkIfExists: true)
     // Create 'chrom_ch' channel which emits a number for pf chromosomes 1 through 14
-    chrom_ch = Channel.from(1,2,3,4,5,6)
+    chrom_ch = Channel.from(1,2,3,4,5,6,7,8,9,10,11,12,13,14)
 
     // Combine 'bam_ch' and 'chrom_ch' to create 'input_ch' channel that emits for each sample
     // a tuple containing 4 elements: pair_id, pf_bam, pf_bam_index, chromosome number
