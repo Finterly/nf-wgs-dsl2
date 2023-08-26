@@ -321,7 +321,7 @@ process insert_summary {
 
     script:
     """
-    cat $insert2_collection | sed '1iMEDIAN_INSERT_SIZE    MEDIAN_ABSOLUTE_DEVIATION    MIN_INSERT_SIZE    MAX_INSERT_SIZE    MEAN_INSERT_SIZE    STANDARD_DEVIATION    READ_PAIRS    WIDTH_OF_10_PERCENT    WIDTH_OF_20_PERCENT    WIDTH_OF_30_PERCENT    WIDTH_OF_40_PERCENT    WIDTH_OF_50_PERCENT    WIDTH_OF_60_PERCENT    WIDTH_OF_70_PERCENT    WIDTH_OF_80_PERCENT    WIDTH_OF_90_PERCENT    WIDTH_OF_95_PERCENT    WIDTH_OF_99_PERCENT    SAMPLE_ID' > InsertSize_Final.tsv
+    cat $insert2_collection | sed '1iMEDIAN_INSERT_SIZE	MEDIAN_ABSOLUTE_DEVIATION	MIN_INSERT_SIZE	MAX_INSERT_SIZE	MEAN_INSERT_SIZE	STANDARD_DEVIATION	READ_PAIRS	WIDTH_OF_10_PERCENT	WIDTH_OF_20_PERCENT	WIDTH_OF_30_PERCENT	WIDTH_OF_40_PERCENT	WIDTH_OF_50_PERCENT	WIDTH_OF_60_PERCENT	WIDTH_OF_70_PERCENT	WIDTH_OF_80_PERCENT	WIDTH_OF_90_PERCENT	WIDTH_OF_95_PERCENT	WIDTH_OF_99_PERCENT	SAMPLE_ID' > InsertSize_Final.tsv
     """
 }
 
@@ -363,7 +363,7 @@ process total_stat_summary {
 
     script:
     """
-    cat $bamstat_total  | sed '1irow_total_reads_total    filtered_reads_total    sequences_total    is_sorted_total    1st_fragments_total    last_fragments_total    reads_mapped_total    reads_mapped_and_paired_total    reads_unmapped_total    reads_properly_paired_total    reads_paired_total    reads_duplicated_total    reads_MQ0_total    reads_QC_failed_total    non_primary_alignments_total    supplementary_alignments_total    total_length_total    total_first_fragment_length_total    total_last_fragment_length_total    bases_mapped_total    bases_mapped_(cigar)_total    bases_trimmed_total    bases_duplicated_total    mismatches_total    error_rate_total    average_length_total    average_first_fragment_length_total    average_last_fragment_length_total    maximum_length_total    maximum_first_fragment_length_total    maximum_last_fragment_length_total    average_quality_total    insert_size_average_total    insert_size_standard_deviation_total    inward_oriented_pairs_total    outward_oriented_pairs_total    pairs_with_other_orientation_total    pairs_on_different_chromosomes_total    percentage_of_properly_paired_reads_(%)_total    sample_id' > Bam_stats_total_Final.tsv
+    cat $bamstat_total  | sed '1irow_total_reads_total	filtered_reads_total	sequences_total	is_sorted_total	1st_fragments_total	last_fragments_total	reads_mapped_total	reads_mapped_and_paired_total	reads_unmapped_total	reads_properly_paired_total	reads_paired_total	reads_duplicated_total	reads_MQ0_total	reads_QC_failed_total	non_primary_alignments_total	supplementary_alignments_total	total_length_total	total_first_fragment_length_total	total_last_fragment_length_total	bases_mapped_total	bases_mapped_(cigar)_total	bases_trimmed_total	bases_duplicated_total	mismatches_total	error_rate_total	average_length_total	average_first_fragment_length_total	average_last_fragment_length_total	maximum_length_total	maximum_first_fragment_length_total	maximum_last_fragment_length_total	average_quality_total	insert_size_average_total	insert_size_standard_deviation_total	inward_oriented_pairs_total	outward_oriented_pairs_total	pairs_with_other_orientation_total	pairs_on_different_chromosomes_total	percentage_of_properly_paired_reads_(%)_total	sample_id' > Bam_stats_total_Final.tsv
     """
 }
 
@@ -405,7 +405,7 @@ process pf_stat_summary {
 
     script:
     """
-    cat $bamstat_pf  | sed '1irow_total_reads_pf    filtered_reads_pf    sequences_pf    is_sorted_pf    1st_fragments_pf    last_fragments_pf    reads_mapped_pf    reads_mapped_and_paired_pf    reads_unmapped_pf    reads_properly_paired_pf    reads_paired_pf    reads_duplicated_pf    reads_MQ0_pf    reads_QC_failed_pf    non_primary_alignments_pf    supplementary_alignments_pf    total_length_pf    total_first_fragment_length_pf    total_last_fragment_length_pf    bases_mapped_pf    bases_mapped_(cigar)_pf    bases_trimmed_pf    bases_duplicated_pf    mismatches_pf    error_rate_pf    average_length_pf    average_first_fragment_length_pf    average_last_fragment_length_pf    maximum_length_pf    maximum_first_fragment_length_pf    maximum_last_fragment_length_pf    average_quality_pf    insert_size_average_pf    insert_size_standard_deviation_pf    inward_oriented_pairs_pf    outward_oriented_pairs_pf    pairs_with_other_orientation_pf    pairs_on_different_chromosomes_pf    percentage_of_properly_paired_reads_(%)_pf    sample_id' > Bam_stats_pf_Final.tsv
+    cat $bamstat_pf  | sed '1irow_total_reads_pf	filtered_reads_pf	sequences_pf	is_sorted_pf	1st_fragments_pf	last_fragments_pf	reads_mapped_pf	reads_mapped_and_paired_pf	reads_unmapped_pf	reads_properly_paired_pf	reads_paired_pf	reads_duplicated_pf	reads_MQ0_pf	reads_QC_failed_pf	non_primary_alignments_pf	supplementary_alignments_pf	total_length_pf	total_first_fragment_length_pf	total_last_fragment_length_pf	bases_mapped_pf	bases_mapped_(cigar)_pf	bases_trimmed_pf	bases_duplicated_pf	mismatches_pf	error_rate_pf	average_length_pf	average_first_fragment_length_pf	average_last_fragment_length_pf	maximum_length_pf	maximum_first_fragment_length_pf	maximum_last_fragment_length_pf	average_quality_pf	insert_size_average_pf	insert_size_standard_deviation_pf	inward_oriented_pairs_pf	outward_oriented_pairs_pf	pairs_with_other_orientation_pf	pairs_on_different_chromosomes_pf	percentage_of_properly_paired_reads_(%)_pf	sample_id' > Bam_stats_pf_Final.tsv
     """
 }
 
@@ -446,7 +446,7 @@ process hs_stat_summary {
 
     script:
     """
-    cat $bamstat_hs | sed '1irow_total_reads_hs    filtered_reads_hs    sequences_hs    is_sorted_hs    1st_fragments_hs    last_fragments_hs    reads_mapped_hs    reads_mapped_and_paired_hs    reads_unmapped_hs    reads_properly_paired_hs    reads_paired_hs    reads_duplicated_hs    reads_MQ0_hs    reads_QC_failed_hs    non_primary_alignments_hs    supplementary_alignments_hs    total_length_hs    total_first_fragment_length_hs    total_last_fragment_length_hs    bases_mapped_hs    bases_mapped_(cigar)_hs    bases_trimmed_hs    bases_duplicated_hs    mismatches_hs    error_rate_hs    average_length_hs    average_first_fragment_length_hs    average_last_fragment_length_hs    maximum_length_hs    maximum_first_fragment_length_hs    maximum_last_fragment_length_hs    average_quality_hs    insert_size_average_hs    insert_size_standard_deviation_hs    inward_oriented_pairs_hs    outward_oriented_pairs_hs    pairs_with_other_orientation_hs    pairs_on_different_chromosomes_hs    percentage_of_properly_paired_reads_(%)_hs    sample_id' > Bam_stats_hs_Final.tsv
+    cat $bamstat_hs | sed '1irow_total_reads_hs	filtered_reads_hs	sequences_hs	is_sorted_hs	1st_fragments_hs	last_fragments_hs	reads_mapped_hs	reads_mapped_and_paired_hs	reads_unmapped_hs	reads_properly_paired_hs	reads_paired_hs	reads_duplicated_hs	reads_MQ0_hs	reads_QC_failed_hs	non_primary_alignments_hs	supplementary_alignments_hs	total_length_hs	total_first_fragment_length_hs	total_last_fragment_length_hs	bases_mapped_hs	bases_mapped_(cigar)_hs	bases_trimmed_hs	bases_duplicated_hs	mismatches_hs	error_rate_hs	average_length_hs	average_first_fragment_length_hs	average_last_fragment_length_hs	maximum_length_hs	maximum_first_fragment_length_hs	maximum_last_fragment_length_hs	average_quality_hs	insert_size_average_hs	insert_size_standard_deviation_hs	inward_oriented_pairs_hs	outward_oriented_pairs_hs	pairs_with_other_orientation_hs	pairs_on_different_chromosomes_hs	percentage_of_properly_paired_reads_(%)_hs	sample_id' > Bam_stats_hs_Final.tsv
     """
 }
 
@@ -484,7 +484,7 @@ process pf_read_depth {
             awk -F"\t" -v OFS="\t" '{ print \$0, \$(NF) = "chr'\$i'" }' tmp.chr"\$i".sample_summary > chr"\$i".sample2_summary
         done
 
-    cat *.sample2_summary | awk '!/sample_id/ {print \$0}' | sed '1isample_id    total    mean    third_quartile    median    first_quartile    bases_perc_above_15    chromosome' > ${pair_id}_read_coverage.tsv
+    cat *.sample2_summary | awk '!/sample_id/ {print \$0}' | sed '1isample_id	total	mean	third_quartile	median	first_quartile	bases_perc_above_15	chromosome' > ${pair_id}_read_coverage.tsv
     """
 }
 
@@ -503,7 +503,7 @@ process pf_read_depth_summary {
 
     script: 
     """
-    cat $read_coverage | awk '!/sample_id/ {print \$0}' | sed '1isample_id    total    mean    third_quartile    median    first_quartile    bases_perc_above_15    chromosome' > ReadCoverage_final.tsv
+    cat $read_coverage | awk '!/sample_id/ {print \$0}' | sed '1isample_id	total	mean	third_quartile	median	first_quartile	bases_perc_above_15	chromosome' > ReadCoverage_final.tsv
     """
 }
 
