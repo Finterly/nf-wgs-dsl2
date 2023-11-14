@@ -56,16 +56,17 @@ If the apptainer image is not already available, please run the command below to
 apptainer build nf-wgs-dsl2.sif Apptainer
 ```
 
-And then include the `apptainer` profile on the command line. *Note: you should also include executor you wish to run*
+**Example: run QC then GVCF workflow (default)** 
+To run on Wynton, include the `apptainer` profile on the command line and the executor you wish to run (`sge`). 
 
 ```bash
 nextflow run main.nf -profile sge,apptainer
 ```
 
-**Example: running only QC workflow** 
+**Example: run only QC workflow** 
 
 Enable `--qc_only`
-Note: specify full paths for `--inputdir`, `--outputdir`, and `--trimadapter`. 
+Optional: specify full paths for `--inputdir`, `--outputdir`, and `--trimadapter`. 
 
 ```bash
 nextflow run main.nf \
@@ -76,12 +77,9 @@ nextflow run main.nf \
 --trimadapter path/adapters/NexteraPE-custom.fa 
 ```
 
-**Example: running only GVCF workflow** 
-
-Parameter `--gvcf_only` is enabled so that only the GVCF workflow is run.  
-
-Make sure that `--inputdir` points to the directory containing the `.sorted.dup.pf.bam` and `.sorted.dup.pf.bam.csi` files. 
-
+**Example: run only GVCF workflow** 
+Enable `--qc_only`  
+Note: for gvcf only runs, `--inputdir` points to the directory containing the `.sorted.dup.pf.bam` and `.sorted.dup.pf.bam.csi` files. 
 ```bash
 nextflow run main.nf \
 -profile sge,apptainer \
@@ -90,8 +88,7 @@ nextflow run main.nf \
 --gvcf_only
 ```
 
-
-#### Apptainer + Job script (SGE)
+#### Running a Job (SGE)
 On Wynton, it is recommended to submit runs as jobs. 
 
 Below is an example script `run_wgs.sh` which contains a bash command for running the nextflow workflow using Apptainer. 
