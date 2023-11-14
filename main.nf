@@ -23,15 +23,19 @@ include { QC } from './workflows/qc.nf'
 include { GVCF } from './workflows/gvcf.nf'
 
 workflow {
-    if( params.qc_only && params.gvcf_only ){
+    if(params.qc_only && params.gvcf_only){
+        // check parameters
         error "Error: only one of (qc_only, gvcf_only) can be enabled."
-    } else if ( params.qc_only ){
+    } else if (params.qc_only){
+        // qc only
         QC()
-    } else if ( params.gvcf_only ) {
-        pf_bam_ch = Channel.fromFilePairs( params.bams, checkIfExists: true )
-        GVCF( pf_bam_ch )
+    } else if (params.gvcf_only) {
+        // gvcf only
+        pf_bam_ch = Channel.fromFilePairs(params.bams, checkIfExists: true).map{index, bam_index -> [index, *bam_index.flatten()]}
+        GVCF(pf_bam_ch)
     }
     else {
+        // qc then gvcf
         QC | GVCF
     }    
 }
