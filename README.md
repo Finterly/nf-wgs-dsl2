@@ -5,20 +5,22 @@ Adapted from:
 - https://github.com/jhoneycuttr/nf-wgs (Nextflow DSL 1)
 
 ## Directory Organization
-- `data`: suggested folder for raw fastq.gz files
-- `results`: suggested folder for output
+- `main.nf`: WGS workflow 
+- `nextflow.config`: config file
 - `workflows` 
-  - `qc.nf`: qc workflow for wgs pipeline
-  - `gvcf.nf`: qVCFs workflow for wgs pipeline
+  - `qc.nf`: QC sub-workflow 
+  - `gvcf.nf`: GVCF sub-workflow
 - `config`
-  - `Apptainer`: the file used to build nf-wgs-dsl2.sif  
-  - `Dockerfile`: dockerfile for when running localling 
+  - `Apptainer`: file used to build nf-wgs-dsl2.sif  
+  - `Dockerfile`: file for building docker image 
   - `base.config`: base config file 
   - `envs`: conda envs (under construction :construction:)
 - `refs`: reference files used by both `QC_workflow` and `gVCF_workflow`
   - `adapters`: folder containing trimmomatic adapter files
   - `genomes`: reference genome files and more
   - `run_quality_report.Rmd`: r script for quality report used in `QC_workflow`
+- *`data`: suggested directory for input files*
+- *`results`: suggested directory for output*
 
 ## Parameters
 
@@ -71,7 +73,7 @@ Submit `run_wgs.sh` script as Wynton job. This option is essentially the same as
 The `run_wgs.sh` script contains a bash command for running the nextflow workflow using Apptainer. 
 You must specify the **full path** to the desired input directory, output directory, and trimmomatic adapter (optional)
 
-snippet from `run_wgs.sh`: 
+snippet from `run_main.sh`: 
 ```
 ...
 INPUT=/path_to/WGS_pipeline_nextflow/data
@@ -80,15 +82,15 @@ OUTPUT=/path_to/WGS_pipeline_nextflow/results
 nextflow run main.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT
 ```
 
-`run_wgs.sh` can be run using the following command on Wynton from a log or dev node: 
+`run_main.sh` can be run using the following command on Wynton from a log or dev node: 
 ```bash
 qsub -cwd run_wgs.sh
 ```
-You can monitor job progress using `qstat` or viewing the log `cat run_wgs.sh.o#######`. 
+You can monitor job progress using `qstat` or viewing the log `cat run_main.sh.o#######`. 
 
 
 ### Docker (Locally)
-Run  `qc_workflow.nf` on local computer using Docker image. The pipeline can be easily run with docker and is the recommended way to run it when not using an HPC.
+Run  `main.nf` on local computer using Docker image. The pipeline can be easily run with docker and is the recommended way to run it when not using an HPC.
 
 Follow the steps below to setup your docker image:
 
@@ -101,7 +103,7 @@ docker build -t finterly/nf-wgs-dsl2 .
 And you're done! To run the pipeline, simply add `-profile docker`. 
 
 ```bash
-NXF_VER=22.11.0-edge nextflow run qc_workflow.nf -profile docker
+nextflow run qc_workflow.nf -profile docker
 ```
 
 
