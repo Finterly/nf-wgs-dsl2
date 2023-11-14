@@ -62,24 +62,21 @@ And then include the `apptainer` profile on the command line. *Note: you should 
 nextflow run main.nf -profile sge,apptainer
 ```
 
-In the example below, we run `main.nf` on Wynton. 
+**Example: running only QC workflow** 
 
-Paths to `--inputdir` and `--outputdir` are provided. Please be sure to specify **full paths**! 
-
-A path to a specific adapter is given for `--trimadapter`. 
-
-Parameter `--qc_only` is enabled so that only the QC workflow is run.  
+Enable `--qc_only`
+Note: specify full paths for `--inputdir`, `--outputdir`, and `--trimadapter`. 
 
 ```bash
 nextflow run main.nf \
+--qc_only \
 -profile sge,apptainer \
 --inputdir path/input_directory_fastq \
 --outputdir path/output_directory \
---trimadapter path/adapters/NexteraPE-custom.fa \
---qc_only
+--trimadapter path/adapters/NexteraPE-custom.fa 
 ```
 
-In the example below, we run `main.nf` on Wynton. 
+**Example: running only GVCF workflow** 
 
 Parameter `--gvcf_only` is enabled so that only the GVCF workflow is run.  
 
