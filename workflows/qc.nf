@@ -1,29 +1,14 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// QC PLASMODIUM FALCIPARUM WGS PIPELINE
-
-params.refdir = "$projectDir/../refs/genomes"
-params.rscript = "$projectDir/../refs/run_quality_report.Rmd"
-
-
-log.info """\
-    QC PLASMODIUM FALCIPARUM WGS - N F   P I P E L I N E
-    ===================================
-    refdir           : ${params.refdir}
-    rscript          : ${params.rscript}
-    trimadapter      : ${params.trimadapter}
-    outdir           : ${params.outdir}
-    """
-    .stripIndent()
-
+// QC Workflow 
 
 //trimmomatic read trimming
-process trimreads {
+process trim_reads {
     
     tag "trim ${pair_id}"    
 
-    publishDir "${params.outdir}/$pair_id",
+    publishDir "${params.outputdir}/$pair_id",
         saveAs: {filename ->
             if (filename.indexOf("_paired.fq.gz") > 0) "trimmed_pairs/$filename"
             else if (filename.indexOf("_unpaired.fq.gz") > 0) "unpaired/$filename"
@@ -41,17 +26,7 @@ process trimreads {
     script:
     """
     trimmomatic PE ${reads[0]} ${reads[1]} \
-    "trimmed_${pair_id}_R1_paired.fq.gz" \
-    "trimmed_${pair_id}_R1_unpaired.fq.gz" \
-    "trimmed_${pair_id}_R2_paired.fq.gz" \
-    "trimmed_${pair_id}_R2_unpaired.fq.gz" \
-    CROP:150 \
-    ILLUMINACLIP:$trimadapter:2:30:10 \
-    LEADING:3 \
-    TRAILING:3 \
-    MINLEN:36 \
-    SLIDINGWINDOW:5:20 \
-    -threads ${params.max_threads}
+    "trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" "trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:36 SLIDINGWINDOW:5:20 -threads ${params.max_threads}
     """
 }
 
@@ -60,7 +35,7 @@ process fastqc {
     
     tag "FASTQC on ${pair_id}"
 
-    publishDir "${params.outdir}/${pair_id}/fastqc"
+    publishDir "${params.outputdir}/${pair_id}/fastqc"
 
     input:
     tuple val(pair_id), path(paired_reads), path(unpaired_reads)
@@ -82,7 +57,7 @@ process multiqc {
     
     tag "multiqc on all trimmed_fastqs"
 
-    publishDir params.outdir, mode:'copy'
+    publishDir params.outputdir, mode:'copy'
 
     input:
     path(fastqc_results)
@@ -104,7 +79,7 @@ process bwa_align {
     tag "align ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outdir}/$pair_id"
+    publishDir "${params.outputdir}/$pair_id"
 
     input:
     tuple val(pair_id), path(paired_reads), path(unpaired_reads)
@@ -122,12 +97,12 @@ process bwa_align {
 }
 
 // sam format converter
-process sam_format_converter {
+process sam_convert {
     
     tag "sam format converter ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outdir}/$pair_id"
+    publishDir "${params.outputdir}/$pair_id"
 
     input:
     tuple val(pair_id), path(sam_file)
@@ -153,7 +128,7 @@ process sam_clean {
     tag "sam cleaning ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outdir}/$pair_id"
+    publishDir "${params.outputdir}/$pair_id"
 
     input:
     tuple val(pair_id), path(bam_file)
@@ -180,7 +155,7 @@ process sam_sort {
     label 'big_mem'
     scratch true
 
-    publishDir "${params.outdir}/$pair_id"
+    publishDir "${params.outputdir}/$pair_id"
 
     input:
     tuple val(pair_id), path(clean_bam)
@@ -215,7 +190,7 @@ process sam_duplicates {
     label 'big_mem'
     scratch true
 
-    publishDir "${params.outdir}/$pair_id"
+    publishDir "${params.outputdir}/$pair_id"
 
     input:
     tuple val(pair_id), path(sorted_bam)
@@ -248,7 +223,7 @@ process target_pf {
     tag "target Pf ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outdir}/$pair_id", mode:'copy'
+    publishDir "${params.outputdir}/$pair_id", mode:'copy'
 
     input:
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
@@ -273,7 +248,7 @@ process target_human {
     tag "target Hs ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outdir}/$pair_id"
+    publishDir "${params.outputdir}/$pair_id"
 
     input:
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
@@ -295,7 +270,7 @@ process insert_sizes {
     
     tag "insert sizes ${pair_id}"
 
-    publishDir "${params.outdir}/$pair_id/stat_dir", mode:'copy'
+    publishDir "${params.outputdir}/$pair_id/stat_dir", mode:'copy'
 
     input:
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
@@ -321,7 +296,7 @@ process insert_summary {
 
     tag "insert summary"
 
-    publishDir params.outdir, mode:'copy'
+    publishDir params.outputdir, mode:'copy'
 
     input:
     path(insert2_collection)
@@ -340,7 +315,7 @@ process total_bam_stat_per_sample {
     
     tag "total bam stat ${pair_id}"
 
-    publishDir "${params.outdir}/$pair_id/stat_dir"
+    publishDir "${params.outputdir}/$pair_id/stat_dir"
     
     input: 
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
@@ -363,7 +338,7 @@ process total_stat_summary {
     
     tag "total stat summary"
 
-    publishDir params.outdir, mode:'copy'
+    publishDir params.outputdir, mode:'copy'
 
     input:
     path(bamstat_total) 
@@ -382,7 +357,7 @@ process pf_bam_stat_per_sample {
     
     tag "Pf bam stat ${pair_id}"
 
-    publishDir "${params.outdir}/$pair_id/stat_dir"
+    publishDir "${params.outputdir}/$pair_id/stat_dir"
     
     input: 
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
@@ -405,7 +380,7 @@ process pf_stat_summary {
     
     tag "Pf stat summary"
 
-    publishDir params.outdir, mode:'copy'
+    publishDir params.outputdir, mode:'copy'
 
     input:
     path(bamstat_pf) 
@@ -424,7 +399,7 @@ process hs_bam_stat_per_sample {
 
     tag "Hs bam stat ${pair_id}"
 
-    publishDir "${params.outdir}/$pair_id/stat_dir"
+    publishDir "${params.outputdir}/$pair_id/stat_dir"
     
     input:
     tuple val(pair_id), path(hs_bam)
@@ -446,7 +421,7 @@ process hs_bam_stat_per_sample {
 process hs_stat_summary {
     tag "Hs stat summary"
 
-    publishDir params.outdir, mode:'copy'
+    publishDir params.outputdir, mode:'copy'
 
     input:
     path(bamstat_hs)
@@ -466,7 +441,7 @@ process pf_read_depth {
     tag "read depth Pf chroms ${pair_id}"
     scratch true
 
-    publishDir "${params.outdir}/$pair_id/stat_dir/by_chrom"
+    publishDir "${params.outputdir}/$pair_id/stat_dir/by_chrom"
 
     input:
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
@@ -503,7 +478,7 @@ process pf_read_depth_summary {
     
     tag "read depth Pf chroms summary"
 
-    publishDir params.outdir, mode:'copy'
+    publishDir params.outputdir, mode:'copy'
 
     input:
     path(read_coverage)
@@ -522,7 +497,7 @@ process run_report_and_calculate_ratio {
  
     tag "run quality report and calculate Pf:Hs ratio"
 
-    publishDir params.outdir, mode:'copy'
+    publishDir params.outputdir, mode:'copy'
 
     input:
     path(report_files)
@@ -542,75 +517,68 @@ process run_report_and_calculate_ratio {
     """
 }
 
-
 workflow.onComplete { 
-    println ( workflow.success ? "\nDone! Open the these reports in your browser --> \nmultiqc = $params.outdir/multiqc_report.html\nrun quality report = $params.outdir/run_quality_report.html\nnextflow summary = $params.outdir/report.html": "Oops .. something went wrong" )
+    println ( workflow.success ? "\nQC run complete!": "Oops .. something went wrong" )
 }
 
+workflow QC {
+    take: read_pairs_ch
+    main: 
+        // trim reads
+        trimmed_reads_ch = trim_reads(read_pairs_ch, params.trimadapter)
 
-workflow {
-    /*
-    Create 'read_pairs' channel that emits for each read pair a
-    tuple containing 3 elements: pair_id, R1, R2
-    */
+        // fastqc report 
+        fastqc_ch = fastqc(trimmed_reads_ch)
+        // multiqc report --
+        multiqc(fastqc_ch.collect()) 
 
-    Channel
-        .fromFilePairs(params.reads, checkIfExists: true)
-        .set{read_pairs_ch}
-        //.ifEmpty{error "Cannot find any reads matching: ${params.reads}"}
+        // bwa alignment
+        sam_ch = bwa_align(trimmed_reads_ch, params.refdir)
 
-    // trim reads
-    trimmed_reads_ch = trimreads(read_pairs_ch, params.trimadapter)
+        // sam format converter, clean, sort, and mark duplicates
+        sam_format_ch = sam_convert(sam_ch, params.refdir)
+        sam_clean_ch = sam_clean(sam_format_ch, params.refdir)
+        sam_sort_ch = sam_sort(sam_clean_ch, params.refdir)
+        sam_dup_ch = sam_duplicates(sam_sort_ch, params.refdir)
 
-    // fastqc report 
-    fastqc_ch = fastqc(trimmed_reads_ch)
-    // multiqc report --
-    multiqc(fastqc_ch.collect()) 
+        // samtools sorting Pf and human reads
+        pf_bam_ch = target_pf(sam_dup_ch, params.refdir)
+        hs_bam_ch = target_human(sam_dup_ch, params.refdir)
 
-    // bwa alignment
-    sam_ch = bwa_align(trimmed_reads_ch, params.refdir)
+        // distribution of Pf read depth by chromosome -- 
+        pf_read_depth_ch = pf_read_depth(pf_bam_ch, params.refdir) 
+        pf_read_depth_summary(pf_read_depth_ch.collect())
 
-    // sam format converter, clean, sort, and mark duplicates
-    sam_format_ch = sam_format_converter(sam_ch, params.refdir)
-    sam_clean_ch = sam_clean(sam_format_ch, params.refdir)
-    sam_sort_ch = sam_sort(sam_clean_ch, params.refdir)
-    sam_dup_ch = sam_duplicates(sam_sort_ch, params.refdir)
+        // insert size calculation
+        inserts_ch = insert_sizes(pf_bam_ch) 
+        insert2_ch = inserts_ch.map{T->[T[2]]} // select *.insert2.txt
+        // insert summary -- 
+        insert_summary(insert2_ch.collect()) 
 
-    // samtools sorting Pf and human reads
-    pf_bam_ch = target_pf(sam_dup_ch, params.refdir)
-    hs_bam_ch = target_human(sam_dup_ch, params.refdir)
+        // Total bam statistics by sample
+        total_bamstat_ch = total_bam_stat_per_sample(sam_dup_ch)
+        total_final_bamstat_ch = total_bamstat_ch.map{T->[T[1]]} // select *_bamstat_total_final.tsv
+        // Total bam statistic summary
+        total_summary_ch = total_stat_summary(total_final_bamstat_ch.collect()) 
 
-    // distribution of Pf read depth by chromosome -- 
-    pf_read_depth_ch = pf_read_depth(pf_bam_ch, params.refdir) 
-    pf_read_depth_summary(pf_read_depth_ch.collect())
+        // Pf bam statistics by sample
+        pf_bamstat_ch = pf_bam_stat_per_sample(pf_bam_ch)
+        pf_final_bamstat_ch = pf_bamstat_ch.map{T->[T[1]]} // select *_bamstat_pf_final.tsv
+        // Pf bam statistic summary
+        pf_summary_ch = pf_stat_summary(pf_final_bamstat_ch.collect()) 
 
-    // insert size calculation
-    inserts_ch = insert_sizes(pf_bam_ch) 
-    insert2_ch = inserts_ch.map{T->[T[2]]} // select *.insert2.txt
-    // insert summary -- 
-    insert_summary(insert2_ch.collect()) 
+        // Hs bam statistics by sample
+        hs_bamstat_ch = hs_bam_stat_per_sample(hs_bam_ch)
+        hs_final_bamstat_ch = hs_bamstat_ch.map{T->[T[1]]} // select *_bamstat_hs_final.tsv
+        // Hs bam statistic summary
+        hs_summary_ch = hs_stat_summary(hs_final_bamstat_ch.collect())
 
-    // Total bam statistics by sample
-    total_bamstat_ch = total_bam_stat_per_sample(sam_dup_ch)
-    total_final_bamstat_ch = total_bamstat_ch.map{T->[T[1]]} // select *_bamstat_total_final.tsv
-    // Total bam statistic summary
-    total_summary_ch = total_stat_summary(total_final_bamstat_ch.collect()) 
+        // Rmd run quality report generation and Calculate Pf:Hs read ratio -- 
+        summary_ch = pf_summary_ch.combine(hs_summary_ch) //combine 
+        insert1_ch = inserts_ch.map{T->[T[1]]} // select *.insert.txt
+        report_files_ch = summary_ch.combine(insert1_ch.collect()) //combine
+        run_report_and_calculate_ratio(report_files_ch, params.rscript)
+        
+    emit: pf_bam_ch
 
-    // Pf bam statistics by sample
-    pf_bamstat_ch = pf_bam_stat_per_sample(pf_bam_ch)
-    pf_final_bamstat_ch = pf_bamstat_ch.map{T->[T[1]]} // select *_bamstat_pf_final.tsv
-    // Pf bam statistic summary
-    pf_summary_ch = pf_stat_summary(pf_final_bamstat_ch.collect()) 
-
-    // Hs bam statistics by sample
-    hs_bamstat_ch = hs_bam_stat_per_sample(hs_bam_ch)
-    hs_final_bamstat_ch = hs_bamstat_ch.map{T->[T[1]]} // select *_bamstat_hs_final.tsv
-    // Hs bam statistic summary
-    hs_summary_ch = hs_stat_summary(hs_final_bamstat_ch.collect())
-
-    // Rmd run quality report generation and Calculate Pf:Hs read ratio -- 
-    summary_ch = pf_summary_ch.combine(hs_summary_ch) //combine 
-    insert1_ch = inserts_ch.map{T->[T[1]]} // select *.insert.txt
-    report_files_ch = summary_ch.combine(insert1_ch.collect()) //combine
-    run_report_and_calculate_ratio(report_files_ch, params.rscript)
 }

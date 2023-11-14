@@ -15,9 +15,9 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 # Install conda packages
-RUN conda install -c conda-forge -c bioconda trimmomatic
-RUN conda install -c conda-forge -c bioconda gatk4
-RUN conda install -c conda-forge -c bioconda fastqc
+RUN conda install -c conda-forge -c bioconda trimmomatic=v0.39
+RUN conda install -c conda-forge -c bioconda gatk4=4.4.0.0
+RUN conda install -c conda-forge -c bioconda fastqc=v0.12.1
 
 # Set up R
 RUN mkdir -p /usr/local/lib/R/etc/ /usr/lib/R/etc/
