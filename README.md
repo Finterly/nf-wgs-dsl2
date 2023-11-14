@@ -56,7 +56,7 @@ If the apptainer image is not already available, please run the command below to
 apptainer build nf-wgs-dsl2.sif Apptainer
 ```
 
-**Example: run QC then GVCF workflow (default)** 
+**Run QC then GVCF workflow (default)** 
 
 To run on Wynton, include the `apptainer` profile on the command line and the executor you wish to run (`sge`). 
 
@@ -64,7 +64,7 @@ To run on Wynton, include the `apptainer` profile on the command line and the ex
 nextflow run main.nf -profile sge,apptainer
 ```
 
-**Example: run only QC workflow** 
+**Run only QC workflow** 
 
 Enable `--qc_only`
 
@@ -79,7 +79,7 @@ nextflow run main.nf \
 --trimadapter path/adapters/NexteraPE-custom.fa 
 ```
 
-**Example: run only GVCF workflow** 
+**Run only GVCF workflow** 
 
 Enable `--qc_only`  
 
@@ -87,10 +87,10 @@ Note: for gvcf only runs, `--inputdir` points to the directory containing the `.
 
 ```bash
 nextflow run main.nf \
+--gvcf_only \
 -profile sge,apptainer \
 --inputdir path/input_directory_bam \
---outputdir path/output_directory \
---gvcf_only
+--outputdir path/output_directory
 ```
 
 #### Running a Job (SGE)
@@ -152,6 +152,25 @@ And you're done! To run the pipeline, simply add `-profile docker`.
 
 ```bash
 nextflow run qc_workflow.nf -profile docker
+```
+
+**Some Other Examples**
+
+```bash
+# QC Only
+nextflow run main.nf \
+--qc_only \
+-profile docker \
+--inputdir path/input_directory_fastq \
+--outputdir path/output_directory \
+--trimadapter path/adapters/NexteraPE-custom.fa 
+
+#GVCF Only
+nextflow run main.nf \
+--gvcf_only \
+-profile docker \
+--inputdir path/input_directory_bam \
+--outputdir path/output_directory 
 ```
 
 
