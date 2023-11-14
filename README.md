@@ -1,4 +1,5 @@
-# Plasmodium Falciparum WGS Pipeline (Nextflow DSL 2)
+# Plasmodium Falciparum WGS Pipeline 
+## (Nextflow DSL 2)
 
 Adapted from: 
 - https://github.com/Karaniare/Optimized_GATK4_pipeline (shell script)
@@ -61,25 +62,52 @@ And then include the `apptainer` profile on the command line. *Note: you should 
 nextflow run main.nf -profile sge,apptainer
 ```
 
-Below is an example using some parameter. Please be sure to specify **full paths**!:
+In the example below, we run `main.nf` on Wynton. Paths to `--inputdir` and `--outputdir` are provided. Please be sure to specify **full paths**! 
+A path is also given for `--trimadapter`. Lastly, `--qc_only` is enabled so that only the QC workflow is run.  
 
 ```bash
-nextflow run main.nf -profile sge,apptainer --inputdir path/input_directory --outdir path/output_directory --trimadapter path/adapters/NexteraPE-custom.fa --qc_only
+nextflow run main.nf -profile sge,apptainer --inputdir path/input_directory_fastq --outputdir path/output_directory --trimadapter path/adapters/NexteraPE-custom.fa --qc_only
 ```
+
+In the example below, we run only the GVCF workflow by enabling `--gvcf_only`. Make sure that `--inputdir` points to the directory containing the `.sorted.dup.pf.bam` and `.sorted.dup.pf.bam.csi` files. 
+
+```bash
+nextflow run main.nf -profile sge,apptainer --inputdir path/input_directory_bam --outputdir path/output_directory --gvcf_only
+```
+
 
 #### Apptainer + Job script (SGE)
-Submit `run_wgs.sh` script as Wynton job. This option is essentially the same as Option 1, but packaged into a script. 
+On Wynton, it is recommended to submit runs as jobs. Below is an example of a `.sh` script `run_wgs.sh`: 
 
 The `run_wgs.sh` script contains a bash command for running the nextflow workflow using Apptainer. 
-You must specify the **full path** to the desired input directory, output directory, and trimmomatic adapter (optional)
 
-snippet from `run_main.sh`: 
 ```
 ...
+#!/bin/bash           # the shell language when run outside of the job scheduler
+#                     # lines starting with #$ is an instruction to the job scheduler
+#$ -S /bin/bash       # the shell language when run via the job scheduler [IMPORTANT]
+#$ -cwd               # job should run in the current working directory
+#$ -j y               # STDERR and STDOUT should be joined
+#$ -l mem_free=1G     # job requires up to 1 GiB of RAM per slot
+#$ -l scratch=2G      # job requires up to 2 GiB of local /scratch space
+#$ -l h_rt=24:00:00   # job requires up to 24 hours of runtime
+#$ -r n               # if job crashes, it should be restarted
+
+date
+hostname
+
+## End-of-job summary, if running as a job
+[[ -n "$JOB_ID" ]] && qstat -j "$JOB_ID"  # This is useful for debugging and usage purposes,
+                                         # e.g. "did my job exceed its memory request?
+
+conda activate nextflow_env #optional
+
 INPUT=/path_to/WGS_pipeline_nextflow/data
 OUTPUT=/path_to/WGS_pipeline_nextflow/results
 
-nextflow run main.nf -profile sge,apptainer --inputdir $INPUT --outdir $OUTPUT
+nextflow run main.nf -profile sge,apptainer --inputdir $INPUT --outputdir $OUTPUT
+
+exit 0
 ```
 
 `run_main.sh` can be run using the following command on Wynton from a log or dev node: 
