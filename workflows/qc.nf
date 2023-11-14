@@ -8,7 +8,7 @@ process trim_reads {
     
     tag "trim ${pair_id}"    
 
-    publishDir "${params.outputdir}/$pair_id",
+    publishDir "${params.outputdir}/intermediate_files",
         saveAs: {filename ->
             if (filename.indexOf("_paired.fq.gz") > 0) "trimmed_pairs/$filename"
             else if (filename.indexOf("_unpaired.fq.gz") > 0) "unpaired/$filename"
@@ -35,7 +35,7 @@ process fastqc {
     
     tag "FASTQC on ${pair_id}"
 
-    publishDir "${params.outputdir}/${pair_id}/fastqc"
+    publishDir "${params.outputdir}/intermediate_files/fastqc"
 
     input:
     tuple val(pair_id), path(paired_reads), path(unpaired_reads)
@@ -57,7 +57,7 @@ process multiqc {
     
     tag "multiqc on all trimmed_fastqs"
 
-    publishDir params.outputdir, mode:'copy'
+    publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
     path(fastqc_results)
@@ -79,7 +79,7 @@ process bwa_align {
     tag "align ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outputdir}/$pair_id"
+    publishDir "${params.outputdir}/intermediate_files/align"
 
     input:
     tuple val(pair_id), path(paired_reads), path(unpaired_reads)
@@ -102,7 +102,7 @@ process sam_convert {
     tag "sam format converter ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outputdir}/$pair_id"
+    publishDir "${params.outputdir}/intermediate_files/align"
 
     input:
     tuple val(pair_id), path(sam_file)
@@ -128,7 +128,7 @@ process sam_clean {
     tag "sam cleaning ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outputdir}/$pair_id"
+    publishDir "${params.outputdir}/intermediate_files/align"
 
     input:
     tuple val(pair_id), path(bam_file)
@@ -155,7 +155,7 @@ process sam_sort {
     label 'big_mem'
     scratch true
 
-    publishDir "${params.outputdir}/$pair_id"
+    publishDir "${params.outputdir}/intermediate_files/align"
 
     input:
     tuple val(pair_id), path(clean_bam)
@@ -190,7 +190,7 @@ process sam_duplicates {
     label 'big_mem'
     scratch true
 
-    publishDir "${params.outputdir}/$pair_id"
+    publishDir "${params.outputdir}/final_bams", mode:'copy'
 
     input:
     tuple val(pair_id), path(sorted_bam)
@@ -223,7 +223,7 @@ process target_pf {
     tag "target Pf ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outputdir}/$pair_id", mode:'copy'
+    publishDir "${params.outputdir}/final_bams", mode:'copy'
 
     input:
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
@@ -248,7 +248,7 @@ process target_human {
     tag "target Hs ${pair_id}"
     label 'big_mem'
 
-    publishDir "${params.outputdir}/$pair_id"
+    publishDir "${params.outputdir}/intermediate_files/align"
 
     input:
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
@@ -270,8 +270,9 @@ process insert_sizes {
     
     tag "insert sizes ${pair_id}"
 
-    publishDir "${params.outputdir}/$pair_id/stat_dir", mode:'copy'
-
+    publishDir "${params.outputdir}", mode: 'copy',
+        saveAs: {filename -> filename.indexOf("_histo.pdf") > 0 ? "histograms/$filename" : "intermediate_files/stat/$filename"}
+    
     input:
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
 
@@ -296,7 +297,7 @@ process insert_summary {
 
     tag "insert summary"
 
-    publishDir params.outputdir, mode:'copy'
+    publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
     path(insert2_collection)
@@ -315,7 +316,7 @@ process total_bam_stat_per_sample {
     
     tag "total bam stat ${pair_id}"
 
-    publishDir "${params.outputdir}/$pair_id/stat_dir"
+    publishDir "${params.outputdir}/intermediate_files/stat"
     
     input: 
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
@@ -338,7 +339,7 @@ process total_stat_summary {
     
     tag "total stat summary"
 
-    publishDir params.outputdir, mode:'copy'
+    publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
     path(bamstat_total) 
@@ -357,7 +358,7 @@ process pf_bam_stat_per_sample {
     
     tag "Pf bam stat ${pair_id}"
 
-    publishDir "${params.outputdir}/$pair_id/stat_dir"
+    publishDir "${params.outputdir}/intermediate_files/stat"
     
     input: 
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
@@ -380,7 +381,7 @@ process pf_stat_summary {
     
     tag "Pf stat summary"
 
-    publishDir params.outputdir, mode:'copy'
+    publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
     path(bamstat_pf) 
@@ -399,7 +400,7 @@ process hs_bam_stat_per_sample {
 
     tag "Hs bam stat ${pair_id}"
 
-    publishDir "${params.outputdir}/$pair_id/stat_dir"
+    publishDir "${params.outputdir}/intermediate_files/stat"
     
     input:
     tuple val(pair_id), path(hs_bam)
@@ -421,7 +422,7 @@ process hs_bam_stat_per_sample {
 process hs_stat_summary {
     tag "Hs stat summary"
 
-    publishDir params.outputdir, mode:'copy'
+    publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
     path(bamstat_hs)
@@ -441,7 +442,7 @@ process pf_read_depth {
     tag "read depth Pf chroms ${pair_id}"
     scratch true
 
-    publishDir "${params.outputdir}/$pair_id/stat_dir/by_chrom"
+    publishDir "${params.outputdir}/intermediate_files/stat"
 
     input:
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
@@ -478,7 +479,7 @@ process pf_read_depth_summary {
     
     tag "read depth Pf chroms summary"
 
-    publishDir params.outputdir, mode:'copy'
+    publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
     path(read_coverage)
@@ -497,7 +498,7 @@ process run_report_and_calculate_ratio {
  
     tag "run quality report and calculate Pf:Hs ratio"
 
-    publishDir params.outputdir, mode:'copy'
+    publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
     path(report_files)

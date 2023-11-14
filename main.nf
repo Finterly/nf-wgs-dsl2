@@ -10,7 +10,7 @@ params.rscript = "$projectDir/refs/run_quality_report.Rmd"
 params.reads = "${params.inputdir}/*_R{1,2}*.fastq.gz"
 
 //GVCF
-params.bams = "${params.inputdir}/*/*.sorted.dup.pf.{bam,bam.csi}"
+params.bams = "${params.inputdir}/*.sorted.dup.pf.{bam,bam.csi}"
 
 log.info """\
 W G S - P I P E L I N E!
