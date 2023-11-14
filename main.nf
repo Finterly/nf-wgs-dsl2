@@ -33,7 +33,6 @@ workflow {
         // input directory reads
         read_pairs_ch = Channel.fromFilePairs( params.reads, checkIfExists: true )
         QC( read_pairs_ch )
-
     } else if ( params.gvcf_only ) {
         // input directory bams
         pf_bam_ch = Channel.fromFilePairs( params.bams, checkIfExists: true )
