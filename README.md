@@ -40,8 +40,8 @@ Additionally, the nextflow parameter `-profile` can be use to target the infrast
 |---|---|
 |refdir|Reference directory is assumed to be located here '$projectDir/refs/genomes'|
 |rscript|Rscript for run quality report is assumed to be located here "$projectDir/refs/run_quality_report.Rmd'|
-|reads|If running the pipeline starting from QC, inputdir is assumed to contain the raw reads fastq.gz files ('${params.inputdir}/*_R{1,2}*.fastq.gz')|
-|bams|If running the pipeline starting from gVCF, inputdir is assumed to contain the pf bam files ('${params.inputdir}/*/*.sorted.dup.pf.{bam,bam.csi}')|
+|reads|If running the pipeline starting from QC, inputdir is assumed to contain the raw reads fastq.gz files|
+|bams|If running the pipeline starting from gVCF, inputdir is assumed to contain the pf bam files and .csi index files|
 
 ## Running the Workflow
 
