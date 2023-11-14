@@ -523,8 +523,8 @@ workflow.onComplete {
 }
 
 workflow QC {
-    take: read_pairs_ch
     main: 
+        read_pairs_ch = Channel.fromFilePairs( params.reads, checkIfExists: true )
         // trim reads
         trimmed_reads_ch = trim_reads(read_pairs_ch, params.trimadapter)
 

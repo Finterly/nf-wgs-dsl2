@@ -5,10 +5,8 @@ nextflow.enable.dsl = 2
 
 params.refdir = "$projectDir/refs/genomes"
 params.rscript = "$projectDir/refs/run_quality_report.Rmd"
-
 // QC 
 params.reads = "${params.inputdir}/*_R{1,2}*.fastq.gz"
-
 //GVCF
 params.bams = "${params.inputdir}/*.sorted.dup.pf.{bam,bam.csi}"
 
@@ -30,11 +28,8 @@ workflow {
     if( params.qc_only && params.gvcf_only ){
         error "Error: only one of (qc_only, gvcf_only) can be enabled."
     } else if ( params.qc_only ){
-        // input directory reads
-        read_pairs_ch = Channel.fromFilePairs( params.reads, checkIfExists: true )
-        QC( read_pairs_ch )
+        QC()
     } else if ( params.gvcf_only ) {
-        // input directory bams
         pf_bam_ch = Channel.fromFilePairs( params.bams, checkIfExists: true )
         GVCF( pf_bam_ch )
     }
