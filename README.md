@@ -5,7 +5,7 @@ Adapted from:
 - https://github.com/Karaniare/Optimized_GATK4_pipeline (shell script)
 - https://github.com/jhoneycuttr/nf-wgs (Nextflow DSL 1)
 
-## Directory Organization
+## Overview
 - `main.nf`: WGS workflow 
 - `nextflow.config`: config file
 - `workflows` 
@@ -62,17 +62,35 @@ And then include the `apptainer` profile on the command line. *Note: you should 
 nextflow run main.nf -profile sge,apptainer
 ```
 
-In the example below, we run `main.nf` on Wynton. Paths to `--inputdir` and `--outputdir` are provided. Please be sure to specify **full paths**! 
-A path is also given for `--trimadapter`. Lastly, `--qc_only` is enabled so that only the QC workflow is run.  
+In the example below, we run `main.nf` on Wynton. 
+
+Paths to `--inputdir` and `--outputdir` are provided. Please be sure to specify **full paths**! 
+
+A path to a specific adapter is given for `--trimadapter`. 
+
+Parameter `--qc_only` is enabled so that only the QC workflow is run.  
 
 ```bash
-nextflow run main.nf -profile sge,apptainer --inputdir path/input_directory_fastq --outputdir path/output_directory --trimadapter path/adapters/NexteraPE-custom.fa --qc_only
+nextflow run main.nf \
+-profile sge,apptainer \
+--inputdir path/input_directory_fastq \
+--outputdir path/output_directory \
+--trimadapter path/adapters/NexteraPE-custom.fa \
+--qc_only
 ```
 
-In the example below, we run only the GVCF workflow by enabling `--gvcf_only`. Make sure that `--inputdir` points to the directory containing the `.sorted.dup.pf.bam` and `.sorted.dup.pf.bam.csi` files. 
+In the example below, we run `main.nf` on Wynton. 
+
+Parameter `--gvcf_only` is enabled so that only the GVCF workflow is run.  
+
+Make sure that `--inputdir` points to the directory containing the `.sorted.dup.pf.bam` and `.sorted.dup.pf.bam.csi` files. 
 
 ```bash
-nextflow run main.nf -profile sge,apptainer --inputdir path/input_directory_bam --outputdir path/output_directory --gvcf_only
+nextflow run main.nf \
+-profile sge,apptainer \
+--inputdir path/input_directory_bam \
+--outputdir path/output_directory \
+--gvcf_only
 ```
 
 
@@ -97,15 +115,18 @@ date
 hostname
 
 ## End-of-job summary, if running as a job
-[[ -n "$JOB_ID" ]] && qstat -j "$JOB_ID"  # This is useful for debugging and usage purposes,
-                                         # e.g. "did my job exceed its memory request?
+[[ -n "$JOB_ID" ]] && qstat -j "$JOB_ID"  
+# This is useful for debugging and usage purposes,
+# e.g. "did my job exceed its memory request?
 
 conda activate nextflow_env #optional
 
 INPUT=/path_to/WGS_pipeline_nextflow/data
 OUTPUT=/path_to/WGS_pipeline_nextflow/results
 
-nextflow run main.nf -profile sge,apptainer --inputdir $INPUT --outputdir $OUTPUT
+nextflow run main.nf -profile sge,apptainer \
+--inputdir $INPUT \
+--outputdir $OUTPUT
 
 exit 0
 ```
