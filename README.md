@@ -34,7 +34,7 @@ Adapted from:
 |outputdir|The folder where you want the resulting data to be save (default 'results/results')|
 |trimadapter|The adapter used for initial trimming of reads (default 'NexteraPE-custom.fa')|
 
-Additionally, the nextflow parameter `-profile` can be use to target the infrastructure you wish to run the pipeline on. The different profiles are listed below, including any setup that is required.
+The nextflow parameter `-profile` can be use to target the infrastructure you wish to run the pipeline on.
 
 #### Parameters in main.nf
 |Parameters|Description|
@@ -77,9 +77,9 @@ nextflow run main.nf -profile sge,apptainer --inputdir path/input_directory_bam 
 
 
 #### Apptainer + Job script (SGE)
-On Wynton, it is recommended to submit runs as jobs. Below is an example of a `.sh` script `run_wgs.sh`: 
+On Wynton, it is recommended to submit runs as jobs. 
 
-The `run_wgs.sh` script contains a bash command for running the nextflow workflow using Apptainer. 
+Below is an example script `run_wgs.sh` which contains a bash command for running the nextflow workflow using Apptainer. 
 
 ```
 ...
