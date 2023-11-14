@@ -57,6 +57,7 @@ apptainer build nf-wgs-dsl2.sif Apptainer
 ```
 
 **Example: run QC then GVCF workflow (default)** 
+
 To run on Wynton, include the `apptainer` profile on the command line and the executor you wish to run (`sge`). 
 
 ```bash
@@ -66,6 +67,7 @@ nextflow run main.nf -profile sge,apptainer
 **Example: run only QC workflow** 
 
 Enable `--qc_only`
+
 Optional: specify full paths for `--inputdir`, `--outputdir`, and `--trimadapter`. 
 
 ```bash
@@ -78,8 +80,11 @@ nextflow run main.nf \
 ```
 
 **Example: run only GVCF workflow** 
+
 Enable `--qc_only`  
+
 Note: for gvcf only runs, `--inputdir` points to the directory containing the `.sorted.dup.pf.bam` and `.sorted.dup.pf.bam.csi` files. 
+
 ```bash
 nextflow run main.nf \
 -profile sge,apptainer \
