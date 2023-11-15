@@ -93,7 +93,7 @@ nextflow run main.nf \
 --outputdir path/output_directory
 ```
 
-#### Running a Job (SGE)
+#### Running a Wynton Job (SGE)
 On Wynton, it is recommended to submit runs as jobs. 
 
 Below is an example script `run_wgs.sh` which contains a bash command for running the nextflow workflow using Apptainer. 
