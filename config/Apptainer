@@ -33,9 +33,9 @@ apt-get update \
     conda config --add channels bioconda
     conda config --add channels conda-forge
     #install trimmomatic
-    conda install -y -c conda-forge -c bioconda trimmomatic
-    conda install -y -c conda-forge -c bioconda gatk4
-    conda install -y -c conda-forge -c bioconda fastqc
+    conda install -y -c conda-forge -c bioconda trimmomatic=v0.39
+    conda install -y -c conda-forge -c bioconda gatk4=4.4.0.0
+    conda install -y -c conda-forge -c bioconda fastqc=v0.12.1
     #cleanup
     conda clean -y --all
     rm -f /opt/miniconda.sh
