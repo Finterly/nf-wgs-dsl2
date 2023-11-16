@@ -1,7 +1,8 @@
 data/
 work/
 tmp/
-refs/
+refs/genomes
+refs/adapters
 .nextflow/
 .nextflow*
 **/.DS_Store
