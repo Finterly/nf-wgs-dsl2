@@ -16,6 +16,7 @@ hostname
 # This is useful for debugging and usage purposes,
 # e.g. "did my job exceed its memory request?
 
+module load CBI miniconda3/23.5.2-0-py311 #wynton 
 conda activate nextflow_env #optional
 
 # Make sure to modify Paths! 
