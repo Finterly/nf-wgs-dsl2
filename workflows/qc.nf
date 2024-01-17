@@ -271,8 +271,8 @@ process insert_sizes {
     tag "insert sizes ${pair_id}"
 
     publishDir "${params.outputdir}", mode: 'copy',
-        saveAs: {filename -> filename.indexOf("_histo.pdf") > 0 ? "histograms/$filename" : "intermediate_files/stat/$filename"}
-    
+        saveAs: {filename -> filename.indexOf("_histo.pdf") > 0 ? "histograms/$filename" : "insert_size_metrics/$filename"}
+        
     input:
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
 

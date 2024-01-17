@@ -4,8 +4,8 @@
 #$ -cwd               # job should run in the current working directory
 #$ -j y               # STDERR and STDOUT should be joined
 #$ -l mem_free=16G     # job requires up to 16 GiB of RAM per slot
-#$ -l scratch=20G      # job requires up to 20 GiB of local /scratch space
-#$ -l h_rt=24:00:00   # job requires up to 24 hours of runtime
+#$ -l scratch=60G      # job requires up to 20 GiB of local /scratch space
+#$ -l h_rt=120:00:00   # job requires up to 24 hours of runtime
 #$ -r n               # if job crashes, it should be restarted
 
 date
@@ -19,8 +19,8 @@ hostname
 conda activate nextflow_env #optional
 
 # Make sure to modify Paths! 
-INPUT=/path_to/WGS_pipeline_nextflow/data
-OUTPUT=/path_to/WGS_pipeline_nextflow/results
+INPUT=/wynton/scratch/finterly_temp/WGS_pipeline_nextflow/data
+OUTPUT=/wynton/scratch/finterly_temp/WGS_pipeline_nextflow/results
 
 nextflow run main.nf -profile sge,apptainer \
 --inputdir $INPUT \
