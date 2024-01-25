@@ -7,6 +7,7 @@ nextflow.enable.dsl=2
 process g_variant_calling {
     
     tag "g variant calling ${pair_id} chr${chrom}"
+    label 'big_mem'
 
     publishDir "${params.outputdir}/chr${chrom}", mode:'copy'
        
@@ -37,10 +38,10 @@ process g_variant_calling {
     -L $refdir/core_chr${chrom}.list \
     -mbq 5 \
     -DF MappingQualityReadFilter \
-    --base-quality-score-threshold 122
-
+    --base-quality-score-threshold 12
     """
 }
+
 
 workflow.onComplete { 
     println ( workflow.success ? "\ngVCF run complete!": "Oops .. something went wrong" )
