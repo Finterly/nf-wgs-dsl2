@@ -14,10 +14,11 @@ params:
 ```{r setup, include=FALSE}
 
 # Knitr Options
-knitr::opts_knit$set( #opts_chunk
+knitr::opts_knit$set(
+  #opts_chunk
   echo = FALSE,
-	message = FALSE,
-	warning = FALSE,
+  message = FALSE,
+  warning = FALSE,
   fig.width = 9,
   fig.height = 6
 )
@@ -51,39 +52,56 @@ For evaluation of read quality and adapter trimming efficiency, see the file:
 ### *P.falciparum* vs *H.sapiens* mapped reads
 
 ```{r hs to pf read ratio table, echo=FALSE, warning=FALSE}
-pf_stats <-read_tsv(file.path(params$directory, "Bam_stats_pf_Final.tsv"), show_col_types = FALSE)
-hs_stats <-read_tsv(file.path(params$directory, "Bam_stats_hs_Final.tsv"), show_col_types = FALSE)
+pf_stats <-
+  read_tsv(file.path(params$directory, "Bam_stats_pf_Final.tsv"),
+           show_col_types = FALSE)
+hs_stats <-
+  read_tsv(file.path(params$directory, "Bam_stats_hs_Final.tsv"),
+           show_col_types = FALSE)
 
-# here we output the Ratios_hs_pf_reads.tsv table 
+# here we output the Ratios_hs_pf_reads.tsv table
 ratio_table <- pf_stats %>%
   select(sample_id, reads_mapped_pf) %>%
   left_join(hs_stats %>% select(sample_id, reads_mapped_hs), by = "sample_id") %>%
-  mutate(ratio_hs_pf = reads_mapped_hs/reads_mapped_pf) 
+  mutate(ratio_hs_pf = reads_mapped_hs / reads_mapped_pf)
 
-write.table(ratio_table, file='Ratios_hs_pf_reads.tsv', sep='\t', quote=FALSE, row.names=FALSE)
+write.table(
+  ratio_table,
+  file = 'Ratios_hs_pf_reads.tsv',
+  sep = '\t',
+  quote = FALSE,
+  row.names = FALSE
+)
 ```
 
 Total mapped reads to the respective human and *Plasmodium* reference genomes within each sample.
 
 ```{r pf to hs read ratio, echo=FALSE, warning=FALSE}
 
-colnames(pf_stats) <- gsub(",","",colnames(pf_stats))
-colnames(hs_stats) <- gsub(",","", colnames(hs_stats))
+colnames(pf_stats) <- gsub(",", "", colnames(pf_stats))
+colnames(hs_stats) <- gsub(",", "", colnames(hs_stats))
 
 pf_stats %>%
   select(sample_id, reads_mapped_pf) %>%
   left_join(hs_stats %>% select(sample_id, reads_mapped_hs), by = "sample_id") %>%
-  mutate(pf_ratio = reads_mapped_pf/reads_mapped_hs) %>%
-  pivot_longer(cols = !c("sample_id","pf_ratio"), values_to = "reads_mapped", names_to = "species") %>%
-  mutate(species = case_when(str_detect(species, "hs") ~ "Human", str_detect(species, "pf") ~ "P.falciparum")) -> reads_long
-  
+  mutate(pf_ratio = reads_mapped_pf / reads_mapped_hs) %>%
+  pivot_longer(
+    cols = !c("sample_id", "pf_ratio"),
+    values_to = "reads_mapped",
+    names_to = "species"
+  ) %>%
+  mutate(species = case_when(
+    str_detect(species, "hs") ~ "Human",
+    str_detect(species, "pf") ~ "P.falciparum"
+  )) -> reads_long
+
 reads_long %>%
   ggplot(aes(x = sample_id, y = reads_mapped, fill = species)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_brewer(palette = "Paired") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60)) -> p1
-  
+
 ggplotly(p1, width = 800)
 ```
 
@@ -95,8 +113,12 @@ Ratio of *P.falciparum* reads to human reads (y) plotted against *Pf* mapped rea
 
 reads_long %>%
   filter(species == "P.falciparum") %>%
-  ggplot(aes(x = log10(reads_mapped), y = pf_ratio, color = sample_id)) +
-  geom_point() + 
+  ggplot(aes(
+    x = log10(reads_mapped),
+    y = pf_ratio,
+    color = sample_id
+  )) +
+  geom_point() +
   scale_color_viridis(discrete = T, direction = -1) +
   theme_minimal() +
   labs(title = "Pf:Human read ratio") -> p2
@@ -113,7 +135,13 @@ ggplotly(p2, width = 600)
 Note to user: sequencing libraries containing fragments with shorter than intended insert sizes may influence downstream variant calling performance.
 
 ```{r insert sizes, include = FALSE}
-insert_files <- list.files(path = params$directory, pattern = "insert.txt", recursive = TRUE, full.names = TRUE)
+insert_files <-
+  list.files(
+    path = params$directory,
+    pattern = "insert.txt",
+    recursive = TRUE,
+    full.names = TRUE
+  )
 
 insert_table <- data.table()
 
@@ -136,7 +164,7 @@ for (i in 1:length(insert_files)) {
 insert_table %>%
   filter(!is.na(insert_size)) %>% ## in order to pivot on this
   mutate(filesplit = str_split(filename, pattern = "/")) %>%
-  mutate(sample = map(.x = filesplit, .f = ~pluck(.x[[3]]))) %>%
+  mutate(sample = map(.x = filesplit, .f = ~ pluck(.x[[3]]))) %>%
   mutate(sample = paste0(sample)) %>%
   mutate(sample = gsub(".insert.txt", "", sample)) -> insert_table
 ```
@@ -147,9 +175,11 @@ insert_table %>%
 insert_table %>%
   ggplot(aes(x = insert_size, y = All_Reads.fr_count, color = sample)) +
   geom_line() +
-  labs(title = "<i>P.falciparum</i> aligned fragment length distribution", subtitle = "(raw counts)", y="fragment counts") +
+  labs(title = "<i>P.falciparum</i> aligned fragment length distribution",
+       subtitle = "(raw counts)",
+       y = "fragment counts") +
   scale_color_viridis(discrete = TRUE, direction = -1) +
-  xlim(0,500) +
+  xlim(0, 500) +
   theme(legend.position = "right") -> p3
 
 ggplotly(p3, width = 600)
@@ -168,7 +198,7 @@ insert_table %>%
 
 insert_table %>%
   left_join(total_fragments, by = "sample") %>%
-  mutate(rel_reads = (All_Reads.fr_count/total_fragments)) -> insert_table
+  mutate(rel_reads = (All_Reads.fr_count / total_fragments)) -> insert_table
 
 insert_table %>%
   ggplot(aes(x = insert_size, y = rel_reads, color = sample)) +
@@ -176,7 +206,7 @@ insert_table %>%
   labs(title = "Fragment length distribution, normalized to total reads within a sample", y = "Pf read counts (relative)") +
   scale_y_continuous(trans = "log10") +
   scale_color_viridis(discrete = T, direction = -1) +
-  xlim(0,1000) +
+  xlim(0, 1000) +
   theme(legend.position = "right") -> p3
 
 ggplotly(p3, width = 600)
@@ -195,15 +225,14 @@ pf_stats %>%
   ggplot(aes(reads_mapped_pf, reads_properly_paired_pf)) +
   geom_point(aes(color = sample_id), size = 2) +
   geom_abline(color = "grey", linetype = "dotdash") +
-               labs(title = "Pf reads: mapped vs properly paired",
-                    x = "Reads mapped",
-                    y = "Reads properly paired") +
-               scale_color_viridis(discrete = T, direction = -1)  +
-               theme(legend.position = "none") -> p4
+  labs(title = "Pf reads: mapped vs properly paired",
+       x = "Reads mapped",
+       y = "Reads properly paired") +
+  scale_color_viridis(discrete = T, direction = -1)  +
+  theme(legend.position = "none") -> p4
 
 ggplotly(p4)
   
-
 ```
 
 #### Reads unmapped
@@ -214,11 +243,11 @@ pf_stats %>%
   ggplot(aes(reads_mapped_pf, reads_unmapped_pf)) +
   geom_point(aes(color = sample_id), size = 2) +
   geom_abline(color = "grey", linetype = "dotdash") +
-               labs(title = "Pf reads: mapped vs unmapped",
-                    x = "Reads mapped",
-                    y = "Reads unmapped") +
-               scale_color_viridis(discrete = T, direction = -1)  +
-               theme(legend.position = "none") -> p5
+  labs(title = "Pf reads: mapped vs unmapped",
+       x = "Reads mapped",
+       y = "Reads unmapped") +
+  scale_color_viridis(discrete = T, direction = -1)  +
+  theme(legend.position = "none") -> p5
 
 ggplotly(p5)
   
@@ -231,11 +260,11 @@ pf_stats %>%
   ggplot(aes(reads_mapped_pf, reads_duplicated_pf)) +
   geom_point(aes(color = sample_id), size = 2) +
   geom_abline(color = "grey", linetype = "dotdash") +
-               labs(title = "Pf reads: mapped vs duplicated",
-                    x = "Reads mapped",
-                    y = "Reads duplicated") +
-               scale_color_viridis(discrete = T, direction = -1)  +
-               theme(legend.position = "none") -> p6
+  labs(title = "Pf reads: mapped vs duplicated",
+       x = "Reads mapped",
+       y = "Reads duplicated") +
+  scale_color_viridis(discrete = T, direction = -1)  +
+  theme(legend.position = "none") -> p6
 
 ggplotly(p6)
 
@@ -244,6 +273,53 @@ ggplotly(p6)
 Note: Check <code> multiqc_report.html </code> for additional measurements and plots of duplicated reads per sample.  
 
 (Duplicate reads are those that start/end at the same alignment positions and are likely to be PCR duplicates that will be collapsed by <code> picardtools MarkDuplicates[Spark] </code> later on in the variant calling procedure).
+
+
+# Plot coverage
+
+Plots percent of bases with coverage above 15 by chromosome. 
+```{r plot coverage p7, echo=FALSE}
+
+coverage_stats <-
+  read_tsv(file.path(params$directory, "ReadCoverage_final.tsv"),
+           show_col_types = FALSE)
+
+coverage_stats %>%
+  ggplot(
+    aes(
+      x = chromosome,
+      y = bases_perc_above_15,
+      color = sample_id,
+      group = sample_id,
+      text = paste(
+        "Sample ID:",
+        sample_id,
+        "<br>Chromosome:",
+        chromosome,
+        "<br>Total:",
+        total,
+        "<br>Mean:",
+        mean,
+        "<br>Third Quartile:",
+        third_quartile,
+        "<br>Median:",
+        median,
+        "<br>First Quartile:",
+        first_quartile,
+        "<br>Perc Bases Above 15:",
+        bases_perc_above_15
+      )
+    )
+  ) +
+  geom_line() +
+  labs(x = "Chromosome", y = "Percent bases covered above 15",
+       title = "Coverage: percent bases covered above 15 by chromosome") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60)) -> p7
+
+ggplotly(p7, tooltip = "text")
+
+```
 
 
 ```{r pf bamstat shiny, echo=FALSE}
@@ -300,11 +376,15 @@ Note: An equivalent file is generated for *Hs*-aligned reads: <code>Bam_stat_sum
 
 pf_stats %>%
   relocate(sample_id, .before = row_total_reads_pf) %>%
-  datatable(extensions = 'Buttons',
-            options = list(dom = 'Bfrtip', 
-                           buttons = c('copy', 'csv'), 
-                           scrollX = TRUE,
-                           fixedColumns = list(leftColumns = 2)))
+  datatable(
+    extensions = 'Buttons',
+    options = list(
+      dom = 'Bfrtip',
+      buttons = c('copy', 'csv'),
+      scrollX = TRUE,
+      fixedColumns = list(leftColumns = 2)
+    )
+  )
 
 ```
 
