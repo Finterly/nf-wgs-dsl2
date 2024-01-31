@@ -300,14 +300,14 @@ process insert_summary {
     publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
-    path(insert2_collection)
+    path(insert2_files)
 
     output:
     path('InsertSize_Final.tsv')
 
     script:
     """
-    cat $insert2_collection | sed '1iMEDIAN_INSERT_SIZE	MEDIAN_ABSOLUTE_DEVIATION	MIN_INSERT_SIZE	MAX_INSERT_SIZE	MEAN_INSERT_SIZE	STANDARD_DEVIATION	READ_PAIRS	WIDTH_OF_10_PERCENT	WIDTH_OF_20_PERCENT	WIDTH_OF_30_PERCENT	WIDTH_OF_40_PERCENT	WIDTH_OF_50_PERCENT	WIDTH_OF_60_PERCENT	WIDTH_OF_70_PERCENT	WIDTH_OF_80_PERCENT	WIDTH_OF_90_PERCENT	WIDTH_OF_95_PERCENT	WIDTH_OF_99_PERCENT	SAMPLE_ID' > InsertSize_Final.tsv
+    cat $insert2_files | sed '1iMEDIAN_INSERT_SIZE	MEDIAN_ABSOLUTE_DEVIATION	MIN_INSERT_SIZE	MAX_INSERT_SIZE	MEAN_INSERT_SIZE	STANDARD_DEVIATION	READ_PAIRS	WIDTH_OF_10_PERCENT	WIDTH_OF_20_PERCENT	WIDTH_OF_30_PERCENT	WIDTH_OF_40_PERCENT	WIDTH_OF_50_PERCENT	WIDTH_OF_60_PERCENT	WIDTH_OF_70_PERCENT	WIDTH_OF_80_PERCENT	WIDTH_OF_90_PERCENT	WIDTH_OF_95_PERCENT	WIDTH_OF_99_PERCENT	SAMPLE_ID' > InsertSize_Final.tsv
     """
 }
 
@@ -501,7 +501,10 @@ process run_report_and_calculate_ratio {
     publishDir "${params.outputdir}/final_qc_reports", mode:'copy'
 
     input:
-    path(report_files)
+    path(pf_summary)
+    path(hs_summary)
+    path(coverage_summary)
+    path(insert1_files)
     path rscript
 
     output:
@@ -512,8 +515,10 @@ process run_report_and_calculate_ratio {
     script:
     """    
     mkdir -p TMP/INSERT_FILES
-    cp $report_files TMP
-    mv TMP/*.insert.txt TMP/INSERT_FILES/
+    cp $pf_summary TMP
+    cp $hs_summary TMP
+    cp $coverage_summary TMP
+    cp $insert1_files TMP/INSERT_FILES/
     Rscript -e 'rmarkdown::render(input = "$rscript", output_dir = getwd(), params = list(directory = "TMP"))'
     """
 }
@@ -537,27 +542,28 @@ workflow QC {
         sam_ch = bwa_align(trimmed_reads_ch, params.refdir)
 
         // sam format converter, clean, sort, and mark duplicates
-        sam_format_ch = sam_convert(sam_ch, params.refdir)
-        sam_clean_ch = sam_clean(sam_format_ch, params.refdir)
-        sam_sort_ch = sam_sort(sam_clean_ch, params.refdir)
-        sam_dup_ch = sam_duplicates(sam_sort_ch, params.refdir)
+        bam_ch = sam_convert(sam_ch, params.refdir)
+        bam_clean_ch = sam_clean(bam_ch, params.refdir)
+        bam_sort_ch = sam_sort(bam_clean_ch, params.refdir)
+        bam_dup_ch = sam_duplicates(bam_sort_ch, params.refdir)
 
         // samtools sorting Pf and human reads
-        pf_bam_ch = target_pf(sam_dup_ch, params.refdir)
-        hs_bam_ch = target_human(sam_dup_ch, params.refdir)
+        pf_bam_ch = target_pf(bam_dup_ch, params.refdir)
+        hs_bam_ch = target_human(bam_dup_ch, params.refdir)
 
         // distribution of Pf read depth by chromosome -- 
         pf_read_depth_ch = pf_read_depth(pf_bam_ch, params.refdir) 
-        pf_read_depth_summary(pf_read_depth_ch.collect())
+        coverage_summary_ch = pf_read_depth_summary(pf_read_depth_ch.collect())
 
         // insert size calculation
         inserts_ch = insert_sizes(pf_bam_ch) 
+        insert1_ch = inserts_ch.map{T->[T[1]]} // select *.insert.txt
         insert2_ch = inserts_ch.map{T->[T[2]]} // select *.insert2.txt
         // insert summary -- 
         insert_summary(insert2_ch.collect()) 
 
         // Total bam statistics by sample
-        total_bamstat_ch = total_bam_stat_per_sample(sam_dup_ch)
+        total_bamstat_ch = total_bam_stat_per_sample(bam_dup_ch)
         total_final_bamstat_ch = total_bamstat_ch.map{T->[T[1]]} // select *_bamstat_total_final.tsv
         // Total bam statistic summary
         total_summary_ch = total_stat_summary(total_final_bamstat_ch.collect()) 
@@ -575,10 +581,7 @@ workflow QC {
         hs_summary_ch = hs_stat_summary(hs_final_bamstat_ch.collect())
 
         // Rmd run quality report generation and Calculate Pf:Hs read ratio -- 
-        summary_ch = pf_summary_ch.combine(hs_summary_ch) //combine 
-        insert1_ch = inserts_ch.map{T->[T[1]]} // select *.insert.txt
-        report_files_ch = summary_ch.combine(insert1_ch.collect()) //combine
-        run_report_and_calculate_ratio(report_files_ch, params.rscript)
+        run_report_and_calculate_ratio(pf_summary_ch, hs_summary_ch, coverage_summary_ch, insert1_ch.collect(), params.rscript)
         
     emit: pf_bam_ch
 
