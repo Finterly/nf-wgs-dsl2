@@ -26,7 +26,9 @@ process trim_reads {
     script:
     """
     trimmomatic PE ${reads[0]} ${reads[1]} \
-    "trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" "trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:36 SLIDINGWINDOW:5:20 -threads ${params.max_threads}
+    "trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" \
+    "trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" \
+    ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:36 SLIDINGWINDOW:5:20 -threads ${task.cpus}
     """
 }
 
@@ -77,7 +79,6 @@ process multiqc {
 process bwa_align {
     
     tag "align ${pair_id}"
-    label 'big_mem'
 
     publishDir "${params.outputdir}/intermediate_files/align"
 
@@ -90,7 +91,7 @@ process bwa_align {
     
     script:
     """
-    bwa mem -t ${params.max_threads} \
+    bwa mem -t ${task.cpus} \
     -M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" \
     $refdir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
     """
@@ -100,7 +101,6 @@ process bwa_align {
 process sam_convert {
     
     tag "sam format converter ${pair_id}"
-    label 'big_mem'
 
     publishDir "${params.outputdir}/intermediate_files/align"
 
@@ -113,7 +113,7 @@ process sam_convert {
 
     script:
     """
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SamFormatConverter \
+    gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" SamFormatConverter \
     -R $refdir/Pf3D7_human.fa \
     -I ${sam_file} \
     -O ${pair_id}.bam
@@ -126,7 +126,6 @@ process sam_convert {
 process sam_clean {
     
     tag "sam cleaning ${pair_id}"
-    label 'big_mem'
 
     publishDir "${params.outputdir}/intermediate_files/align"
 
@@ -139,7 +138,7 @@ process sam_clean {
 
     script:
     """
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" CleanSam \
+    gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" CleanSam \
     -R $refdir/Pf3D7_human.fa \
     -I ${bam_file} \
     -O ${pair_id}.clean.bam
@@ -152,7 +151,6 @@ process sam_clean {
 process sam_sort {
     
     tag "sam sorting ${pair_id}"
-    label 'big_mem'
     scratch true
 
     publishDir "${params.outputdir}/intermediate_files/align"
@@ -171,7 +169,7 @@ process sam_sort {
     mkdir -p TMP
 
     # sam file sorting
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" SortSam \
+    gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" SortSam \
     -R $refdir/Pf3D7_human.fa \
     -I ${clean_bam} \
     -O ${pair_id}.sorted.bam \
@@ -187,7 +185,6 @@ process sam_sort {
 process sam_duplicates {
     
     tag "sam mark duplicates ${pair_id}"
-    label 'big_mem'
     scratch true
 
     publishDir "${params.outputdir}/final_bams", mode:'copy'
@@ -206,7 +203,7 @@ process sam_duplicates {
     """
     mkdir -p TMP
 
-    gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" MarkDuplicates \
+    gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" MarkDuplicates \
     -R $refdir/Pf3D7_human.fa \
     -I ${sorted_bam} \
     -O ${pair_id}.sorted.dup.bam \
@@ -221,7 +218,6 @@ process sam_duplicates {
 process target_pf {
     
     tag "target Pf ${pair_id}"
-    label 'big_mem'
 
     publishDir "${params.outputdir}/final_bams", mode:'copy'
 
@@ -246,7 +242,6 @@ process target_pf {
 process target_human {
     
     tag "target Hs ${pair_id}"
-    label 'big_mem'
 
     publishDir "${params.outputdir}/intermediate_files/align"
 
@@ -459,7 +454,7 @@ process pf_read_depth {
 
     for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14
         do
-            gatk --java-options "-Xmx${params.gatk_memory}g -Xms${params.gatk_memory}g" DepthOfCoverage \
+            gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" DepthOfCoverage \
             -R "$refdir/Pf3D7.fasta" \
             -O chr"\$i" \
             --output-format TABLE \
