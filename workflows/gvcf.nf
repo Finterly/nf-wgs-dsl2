@@ -8,7 +8,7 @@ process g_variant_calling {
     
     tag "g variant calling ${pair_id} chr${chrom}"
     label 'big_mem'
-
+    
     publishDir "${params.outputdir}/chr${chrom}", mode:'copy'
        
     input:
@@ -20,7 +20,7 @@ process g_variant_calling {
 
     script:
     """    
-    gatk --java-options "-Xmx${params.gatk_memory}g" HaplotypeCaller \
+    gatk --java-options "-Xmx${task.memory.toGiga()}g" HaplotypeCaller \
     -R $refdir/Pf3D7.fasta \
     -I ${pf_bam} \
     -ERC GVCF \
