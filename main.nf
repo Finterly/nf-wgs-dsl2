@@ -3,7 +3,6 @@
  */
 nextflow.enable.dsl = 2
 
-// params.refdir = "$projectDir/refs/genomes" 
 params.rscript = "$projectDir/refs/run_quality_report.Rmd" 
 params.reads = "${params.inputdir}/*_R{1,2}*.fastq.gz" // if start from QC 
 params.bams = "${params.inputdir}/*.sorted.dup.pf.{bam,bam.csi}" // if start from GVCF
