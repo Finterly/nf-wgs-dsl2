@@ -13,7 +13,7 @@ process g_variant_calling {
        
     input:
     tuple val(pair_id), path(pf_bam), path(pf_bam_index), val(chrom)
-    path refdir
+    path genomes_dir
 
     output:
     tuple path("${pair_id}.chr${chrom}.g.vcf"), path("${pair_id}.chr${chrom}.g.vcf.idx")  
@@ -21,7 +21,7 @@ process g_variant_calling {
     script:
     """    
     gatk --java-options "-Xmx${task.memory.toGiga()}g" HaplotypeCaller \
-    -R $refdir/Pf3D7.fasta \
+    -R $genomes_dir/Pf3D7.fasta \
     -I ${pf_bam} \
     -ERC GVCF \
     -ploidy 2 \
@@ -35,7 +35,7 @@ process g_variant_calling {
     --heterozygosity 0.0029 \
     --indel-heterozygosity 0.0017 \
     --min-assembly-region-size 100 \
-    -L $refdir/core_chr${chrom}.list \
+    -L $genomes_dir/core_chr${chrom}.list \
     -mbq 5 \
     -DF MappingQualityReadFilter \
     --base-quality-score-threshold 12
@@ -59,7 +59,7 @@ workflow GVCF {
         input_ch = pf_bam_ch.combine(chrom_ch)
     
         // variant calling
-        var_ch = g_variant_calling(input_ch, params.refdir) 
+        var_ch = g_variant_calling(input_ch, params.genomes_dir) 
 
     emit: var_ch
     

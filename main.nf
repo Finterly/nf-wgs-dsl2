@@ -11,11 +11,13 @@ params.bams = "${params.inputdir}/*.sorted.dup.pf.{bam,bam.csi}" // if start fro
 log.info """\
 W G S - P I P E L I N E!
 ================================
-qc_only         : $params.qc_only
-gvcf_only       : $params.gvcf_only
 inputdir        : $params.inputdir
 outputdir       : $params.outputdir
-trimadapter     : $params.trimadapter
+qc_only         : $params.qc_only
+gvcf_only       : $params.gvcf_only
+trim_adapter    : $params.trim_adapter
+genomes_dir     : $params.genomes_dir
+sif_path        : $params.sif_path
 """
 
 // workflows 
