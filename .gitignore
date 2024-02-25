@@ -1,10 +1,4 @@
-data/
-work/
-tmp/
 refs/genomes
-refs/adapters
-.nextflow/
-.nextflow*
 **/.DS_Store
 */.DS_Store
 .Rhistory
