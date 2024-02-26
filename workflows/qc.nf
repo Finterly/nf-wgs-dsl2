@@ -17,7 +17,7 @@ process trim_reads {
         
     input:
     tuple val(pair_id), path(reads)
-    path trim_adapter
+    path trimadapter
 
     output:
     tuple val(pair_id), path("trimmed_${pair_id}_R{1,2}_paired.fq.gz"),
@@ -28,7 +28,7 @@ process trim_reads {
     trimmomatic PE ${reads[0]} ${reads[1]} \
     "trimmed_${pair_id}_R1_paired.fq.gz" "trimmed_${pair_id}_R1_unpaired.fq.gz" \
     "trimmed_${pair_id}_R2_paired.fq.gz" "trimmed_${pair_id}_R2_unpaired.fq.gz" \
-    ILLUMINACLIP:$trim_adapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:36 SLIDINGWINDOW:5:20 -threads ${task.cpus}
+    ILLUMINACLIP:$trimadapter:2:30:10 LEADING:3 TRAILING:3 MINLEN:36 SLIDINGWINDOW:5:20 -threads ${task.cpus}
     """
 }
 
@@ -84,7 +84,7 @@ process bwa_align {
 
     input:
     tuple val(pair_id), path(paired_reads), path(unpaired_reads)
-    path genomes_dir
+    path refdir
 
     output:
     tuple val(pair_id), path("${pair_id}.sam")
@@ -93,7 +93,7 @@ process bwa_align {
     """
     bwa mem -t ${task.cpus} \
     -M -R "@RG\\tID:${pair_id}\\tLB:${pair_id}\\tPL:illumina\\tSM:${pair_id}\\tPU:${pair_id}" \
-    $genomes_dir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
+    $refdir/Pf3D7_human.fa ${paired_reads} > ${pair_id}.sam
     """
 }
 
@@ -106,7 +106,7 @@ process sam_convert {
 
     input:
     tuple val(pair_id), path(sam_file)
-    path genomes_dir
+    path refdir
 
     output:
     tuple val(pair_id), path("${pair_id}.bam")
@@ -114,7 +114,7 @@ process sam_convert {
     script:
     """
     gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" SamFormatConverter \
-    -R $genomes_dir/Pf3D7_human.fa \
+    -R $refdir/Pf3D7_human.fa \
     -I ${sam_file} \
     -O ${pair_id}.bam
 
@@ -131,7 +131,7 @@ process sam_clean {
 
     input:
     tuple val(pair_id), path(bam_file)
-    path genomes_dir
+    path refdir
 
     output:
     tuple val(pair_id), path("${pair_id}.clean.bam")
@@ -139,7 +139,7 @@ process sam_clean {
     script:
     """
     gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" CleanSam \
-    -R $genomes_dir/Pf3D7_human.fa \
+    -R $refdir/Pf3D7_human.fa \
     -I ${bam_file} \
     -O ${pair_id}.clean.bam
 
@@ -157,7 +157,7 @@ process sam_sort {
 
     input:
     tuple val(pair_id), path(clean_bam)
-    path genomes_dir
+    path refdir
 
     output:
     tuple val(pair_id), path("${pair_id}.sorted.bam")
@@ -170,7 +170,7 @@ process sam_sort {
 
     # sam file sorting
     gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" SortSam \
-    -R $genomes_dir/Pf3D7_human.fa \
+    -R $refdir/Pf3D7_human.fa \
     -I ${clean_bam} \
     -O ${pair_id}.sorted.bam \
     -SO coordinate \
@@ -191,7 +191,7 @@ process sam_duplicates {
 
     input:
     tuple val(pair_id), path(sorted_bam)
-    path genomes_dir
+    path refdir
 
     output:
     tuple val(pair_id), path("${pair_id}.sorted.dup.bam"),
@@ -204,7 +204,7 @@ process sam_duplicates {
     mkdir -p TMP
 
     gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" MarkDuplicates \
-    -R $genomes_dir/Pf3D7_human.fa \
+    -R $refdir/Pf3D7_human.fa \
     -I ${sorted_bam} \
     -O ${pair_id}.sorted.dup.bam \
     -M ${pair_id}_dup_metrics.txt \
@@ -223,7 +223,7 @@ process target_pf {
 
     input:
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
-    path genomes_dir
+    path refdir
 
     output:
     tuple val(pair_id), path("${pair_id}.sorted.dup.pf.bam"), path("${pair_id}.sorted.dup.pf.bam.csi")
@@ -231,8 +231,8 @@ process target_pf {
     script:
     """
     samtools view -b -h ${sorted_dup_bam} \
-    -T $genomes_dir/Pf3D7.fasta \
-    -L $genomes_dir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
+    -T $refdir/Pf3D7.fasta \
+    -L $refdir/Pf3D7_core.bed > ${pair_id}.sorted.dup.pf.bam
 
     samtools index -bc ${pair_id}.sorted.dup.pf.bam
     """    
@@ -247,7 +247,7 @@ process target_human {
 
     input:
     tuple val(pair_id), path(sorted_dup_bam), path(dup_metrics_txt)
-    path genomes_dir
+    path refdir
 
     output:
     tuple val(pair_id), path("${pair_id}.sorted.dup.hs.bam")
@@ -255,8 +255,8 @@ process target_human {
     script:
     """
     samtools view -b -h ${sorted_dup_bam} \
-    -T $genomes_dir/genome.fa \
-    -L $genomes_dir/human.bed > ${pair_id}.sorted.dup.hs.bam
+    -T $refdir/genome.fa \
+    -L $refdir/human.bed > ${pair_id}.sorted.dup.hs.bam
     """    
 }
 
@@ -441,7 +441,7 @@ process pf_read_depth {
 
     input:
     tuple val(pair_id), path(pf_bam), path(pf_bam_index)
-    path genomes_dir
+    path refdir
 
     output:
     path("${pair_id}_read_coverage.tsv")
@@ -455,7 +455,7 @@ process pf_read_depth {
     for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14
         do
             gatk --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g" DepthOfCoverage \
-            -R "$genomes_dir/Pf3D7.fasta" \
+            -R "$refdir/Pf3D7.fasta" \
             -O chr"\$i" \
             --output-format TABLE \
             -L Pf3D7_"\$i"_v3 \
@@ -526,7 +526,7 @@ workflow QC {
     main: 
         read_pairs_ch = Channel.fromFilePairs( params.reads, checkIfExists: true )
         // trim reads
-        trimmed_reads_ch = trim_reads(read_pairs_ch, params.trim_adapter)
+        trimmed_reads_ch = trim_reads(read_pairs_ch, params.trimadapter)
 
         // fastqc report 
         fastqc_ch = fastqc(trimmed_reads_ch)
@@ -534,20 +534,20 @@ workflow QC {
         multiqc(fastqc_ch.collect()) 
 
         // bwa alignment
-        sam_ch = bwa_align(trimmed_reads_ch, params.genomes_dir)
+        sam_ch = bwa_align(trimmed_reads_ch, params.refdir)
 
         // sam format converter, clean, sort, and mark duplicates
-        bam_ch = sam_convert(sam_ch, params.genomes_dir)
-        bam_clean_ch = sam_clean(bam_ch, params.genomes_dir)
-        bam_sort_ch = sam_sort(bam_clean_ch, params.genomes_dir)
-        bam_dup_ch = sam_duplicates(bam_sort_ch, params.genomes_dir)
+        bam_ch = sam_convert(sam_ch, params.refdir)
+        bam_clean_ch = sam_clean(bam_ch, params.refdir)
+        bam_sort_ch = sam_sort(bam_clean_ch, params.refdir)
+        bam_dup_ch = sam_duplicates(bam_sort_ch, params.refdir)
 
         // samtools sorting Pf and human reads
-        pf_bam_ch = target_pf(bam_dup_ch, params.genomes_dir)
-        hs_bam_ch = target_human(bam_dup_ch, params.genomes_dir)
+        pf_bam_ch = target_pf(bam_dup_ch, params.refdir)
+        hs_bam_ch = target_human(bam_dup_ch, params.refdir)
 
         // distribution of Pf read depth by chromosome -- 
-        pf_read_depth_ch = pf_read_depth(pf_bam_ch, params.genomes_dir) 
+        pf_read_depth_ch = pf_read_depth(pf_bam_ch, params.refdir) 
         coverage_summary_ch = pf_read_depth_summary(pf_read_depth_ch.collect())
 
         // insert size calculation

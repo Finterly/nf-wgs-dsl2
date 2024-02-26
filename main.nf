@@ -3,6 +3,7 @@
  */
 nextflow.enable.dsl = 2
 
+params.refdir = "$projectDir/refs/genomes" 
 params.rscript = "$projectDir/refs/run_quality_report.Rmd" 
 params.reads = "${params.inputdir}/*_R{1,2}*.fastq.gz" // if start from QC 
 params.bams = "${params.inputdir}/*.sorted.dup.pf.{bam,bam.csi}" // if start from GVCF
@@ -10,13 +11,11 @@ params.bams = "${params.inputdir}/*.sorted.dup.pf.{bam,bam.csi}" // if start fro
 log.info """\
 W G S - P I P E L I N E!
 ================================
-inputdir        : $params.inputdir
-outputdir       : $params.outputdir
 qc_only         : $params.qc_only
 gvcf_only       : $params.gvcf_only
-trim_adapter    : $params.trim_adapter
-genomes_dir     : $params.genomes_dir
-sif_path        : $params.sif_path
+inputdir        : $params.inputdir
+outputdir       : $params.outputdir
+trimadapter     : $params.trimadapter
 """
 
 // workflows 
