@@ -16,7 +16,7 @@ process g_variant_calling {
     path genomes_dir
 
     output:
-    tuple path("${pair_id}.chr${chrom}.g.vcf"), path("${pair_id}.chr${chrom}.g.vcf.idx")  
+    tuple path("${pair_id}.chr${chrom}.g.vcf"), path("${pair_id}.chr${chrom}.g.vcf.idx", ${pair_id}.chr${chrom}_log.txt)  
 
     script:
     """    
@@ -38,7 +38,8 @@ process g_variant_calling {
     -L $genomes_dir/core_chr${chrom}.list \
     -mbq 5 \
     -DF MappingQualityReadFilter \
-    --base-quality-score-threshold 12
+    --base-quality-score-threshold 12 \ 
+    > ${pair_id}.chr${chrom}_log.txt 2>&1
     """
 }
 
