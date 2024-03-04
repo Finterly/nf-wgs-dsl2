@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// Genomic Variant Calling Worflow
+// Genomic Variant Calling Workflow
 
 // Running HaplotypeCaller to generate gVCFs
 process g_variant_calling {
@@ -16,7 +16,7 @@ process g_variant_calling {
     path genomes_dir
 
     output:
-    tuple path("${pair_id}.chr${chrom}.g.vcf"), path("${pair_id}.chr${chrom}.g.vcf.idx", ${pair_id}.chr${chrom}_log.txt)  
+    tuple path("${pair_id}.chr${chrom}.g.vcf"), path("${pair_id}.chr${chrom}.g.vcf.idx"), path("${pair_id}.chr${chrom}_log.txt")  
 
     script:
     """    
