@@ -38,7 +38,7 @@ process g_variant_calling {
     -L $genomes_dir/core_chr${chrom}.list \
     -mbq 5 \
     -DF MappingQualityReadFilter \
-    --base-quality-score-threshold 12 \ 
+    --base-quality-score-threshold 12 \
     > ${pair_id}.chr${chrom}_log.txt 2>&1
     """
 }
